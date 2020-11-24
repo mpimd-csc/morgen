@@ -1,0 +1,20 @@
+# code.ini
+name: Model Order Reduction for Gas and Energy Networks
+shortname: morgen
+version: 0.9
+release-date: 2020-11-24
+id: 10.5281/zenodo.?
+id-type: doi
+author: Christian Himpe, Sara Grundel
+orcid: 0000-0003-2194-6754, 
+topic: Gas Network Simulation
+type: Platform
+license: BSD-2-Clause
+license-type: open-source
+repository: github.com/mpcsc/morgen
+repository-type: git
+language: Matlab
+dependencies: Octave >=6.1, Matlab >=2020b
+systems: Linux, Windows
+website: github.com/mpcsc/morgen
+keywords: Model Reduction, Model Order Reduction, Gas Network, Gas Transport, Digital Twin
