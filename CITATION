@@ -1,12 +1,20 @@
 Cite As:
 
-C. Himpe, S. Grundel, P. Benner (2020).
-Model Order Reduction for Gas and Energy Networks.
+C. Himpe, S. Grundel, P. Benner (2020):
+"Model Order Reduction for Gas and Energy Networks";
+arXiv (math.OC): 2011.12099. 
+https://arxiv.org/abs/2011.12099
 
 BibTeX Entry:
 
-@MISC{morHimGB20,
- author = {C. Himpe, S. Grundel, P. Benner},
- title = {Model Order Reduction for Gas and Energy Networks},
- year = {2020}
+@TechReport{morHimGB20,
+  author =       {Himpe, C. and Grundel, S. and Benner, P.},
+  title =        {Model Order Reduction for Gas and Energy Networks},
+  institution =  {arXiv},
+  type =         {eprints},
+  note =         {math.OC},
+  number =       {2011.12099},
+  year =         {2020},
+  url =          {https://arxiv.org/abs/2011.12099}
 }
+
