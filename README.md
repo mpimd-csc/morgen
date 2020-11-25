@@ -30,7 +30,7 @@ Please cite the **morgen** platform via its companion paper:
 
 P. Benner, S. Grundel, C. Himpe:
 **Moder Order Reduction for Gas and Energy Networks**;
-arXiv (math.OC): 2020.
+arXiv (math.OC): 2011.12099, 2020.
 
 ## Getting Started
 
@@ -124,6 +124,17 @@ All available network datasets are listed with the network's number of
 * `GasLib134`  - Greece  (`n0=?, nS=3, nD=45`)
 * `GasLib582`  - Germany (`n0=?, nS=31, nD=129`)
 * `GasLib4197` - Germany (`n0=?, nS=11, nD=1009`)
+
+#### Origins
+
+The GasLib network data-sets are derived from:
+
+M. Schmidt, D. Aßmann, R. Burlacu, J. Humpola, I. Joormann, N. Kanelakis,
+T. Koch, D. Oucherif, M.E. Pfetsch, L. Schewe, R. Schwarz, M. Sirvent:
+"GasLib - A Library of Gas Network Instances";
+Data 2(4): 40, 2017.
+
+and licensed under **CC-BY**, see: https://gaslib.zib.de
 
 #### File Format
 
@@ -365,11 +376,11 @@ xsltproc -o GasLib-X.csv xml2csv.xsl GasLib-X.xml
 
 ### 1.0
 
-* Implement valves as affine linear component
-* Fix Octave incompatibilities in `format_network`
-* Fix slow `ode23s` in Octave
-* Test network **partDE**
-* Extend documentation
+* ADD valves as affine linear component
+* FIX Octave incompatibilities in `format_network`
+* FIX slow `ode23s` in Octave
+* TEST network **partDE**
+* ADD documentation
 
 ### 1.1
 
