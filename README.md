@@ -31,6 +31,7 @@ Please cite the **morgen** platform via its companion paper:
 P. Benner, S. Grundel, C. Himpe:
 **Moder Order Reduction for Gas and Energy Networks**;
 arXiv (math.OC): 2011.12099, 2020.
+[arXiv:2011.12099](https://arxiv.org/abs/2011.12099)
 
 ## Getting Started
 
@@ -314,16 +315,16 @@ if not found hard-coded default values are used.
 * `morgen_plots` (**String**) Folder to store plots, default: `z_plots`
 * `morgen_roms`  (**String**) Folder to store reduced order models, defaut: `z_roms`
 
-* `network_dt`   (**Positive float**) Requested time step width in seconds, default: `30`
+* `network_dt`   (**Positive float**) Requested time step width in seconds, default: `60`
 * `network_vmax` (**Positive float**) Maximum velocity of gas in meters per second, default: `20`
 
-* `model_reynolds`        (**Positive float**) Estimated Reynolds number, defult: `1000000`
-* `model_friction`        (**String**) Friction factor model, select from `hofer`, `nikuradse`, `altshul`, `schifrinson`, `pmt1025`, `igt`, default: `hofer`
+* `model_reynolds`        (**Positive float**) Estimated Reynolds number, default: `1000000`
+* `model_friction`        (**String**) Friction factor model, select from `hofer`, `nikuradse`, `altshul`, `schifrinson`, `pmt1025`, `igt`, default: `schifrinson`
 * `model_compressibility` (**String**) Compressibility factor model, select from: `ideal`, `dvgw`, `aga88`, `papay`, default: `ideal`
 * `model_compref`         (**String**) Reference for compressibility: `steady`, `normal`, default: `steady`
 
-* `steady_maxiter`  (**Positive Integer**) Number of iterations to refine steady-state estimation, default: `1`
-* `steady_maxerror` (**Positive Integer**)
+* `steady_maxiter`  (**Positive Integer**) Number of iterations to refine steady-state estimation, default: `1000`
+* `steady_maxerror` (**Positive Integer**) Maximal error of refined steady-state, default: `1e-6`
 * `steady_Tc`       (**Float**) Critical temperature in Celsius, default: `-82.595`
 * `steady_pc`       (**Float**) Critical pressure in Bar, default: `45.988`
 * `steady_pn`       (**Float**) Normal pressure in Bar, default: `1.01325`
@@ -333,10 +334,10 @@ if not found hard-coded default values are used.
 * `T0_min` (**Float**) Minimum ambient temperature in Celsius, default: `0`
 * `T0_max` (**Float**) Maximum ambient temperature in Celsius, default: `25`
 * `Rs_min` (**Float**) Minimum specific gas constant in [J/(kg*K)], default: `500.0`
-* `Rs_max` (**Float**) Maximum specific gas constant in [J/(kg*K)], default: `1000.0`
+* `Rs_max` (**Float**) Maximum specific gas constant in [J/(kg*K)], default: `600.0`
 
 * `mor_excitation` (**String**) Generic training input type, select from: `impulse`, `step`, `random-binary`, `white-noise`, default: `step`
-* `mor_max`        (**Positive Integer**) Maximum reduced order, default: `100`
+* `mor_max`        (**Positive Integer**) Maximum reduced order, default: `250`
 * `mor_parametric` (**String**) Use parametric model order reduction, select from `yes`, `no`, default: `yes`
 * `mor_pgrid`      (**Positive Integer**) Sparse parameter grid refinement level, default: `1`
 
