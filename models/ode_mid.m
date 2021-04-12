@@ -1,14 +1,14 @@
 function discrete = ode_mid(network,config)
 %%% project: morgen - Model Order Reduction for Gas and Energy Networks
-%%% version: 0.9 (2020-11-24)
+%%% version: 0.99 (2021-04-12)
 %%% authors: C. Himpe (0000-0003-2194-6754), S. Grundel (0000-0002-0209-6566)
-%%% license: 2-Clause BSD (opensource.org/licenses/BSD-2-clause)
+%%% license: BSD-2-Clause (opensource.org/licenses/BSD-2-clause)
 %%% summary: Nonlinear implicit ODE midpoint model.
 
 %% System Dimensions
 
-    discrete.nP = size(network.PQ,1);						% number of pressure states
-    discrete.nQ = size(network.QP,1);						% number of mass-flux states
+    discrete.nP = size(network.A0,1);						% number of pressure states
+    discrete.nQ = size(network.A0,2);						% number of mass-flux states
     discrete.nPorts = network.nSupply + network.nDemand; 			% number of ports
 
     discrete.refine = blkdiag(network.node_op,network.edge_op);
@@ -19,18 +19,18 @@ function discrete = ode_mid(network,config)
 
     F_k = network.length ./ network.nomLen;					% actual-nominal length fraction
 
-    absApq = abs(network.PQ);
-    absAqp = abs(network.QP);
+    absA0  = abs(network.A0);
+    absA0T = abs(network.A0)';
     absBqs = abs(network.Bs)';
 
     d_p = D_p(network.diameter, network.nomLen);
     d_q = D_q(network.diameter, network.nomLen);
-    d_g = D_g(network.diameter, network.nomLen, network.incline);
+    d_g = D_g(network.incline);
     d_f = D_f(network.diameter, config.friction(network.diameter,network.roughness));
 
 %% Helper Functions
 
-    p2q = @(p,us) 1e5 * 0.5 * ( (absAqp * p) + (absBqs * us) );
+    p2q = @(p,us) 1e5 * 0.5 * ( (absA0T * p) + (absBqs * us) );
 
 %% Component Indices
 
@@ -40,72 +40,75 @@ function discrete = ode_mid(network,config)
 
 %% System Components
 
-%
-%     / (|A_pq| 1/2 D_P^-1 D_d |A_qp|)  0 \
-% E = |                                   |
-%     \               0                 1 /
+    discrete.x0 = zeros(discrete.nP+discrete.nQ,1);
 
-    discrete.E = @(p,z) [absApq * (0.25 * d_p * D_d(p,z)) * absAqp, sparse(discrete.nP, discrete.nQ); ...
-                                  sparse(discrete.nQ, discrete.nP), speye(discrete.nQ)];
+%
+%     / (|A_0| 1/2 D_P^-1 D_d |A_0^T|)     0   \
+% E = |                                        |
+%     \               0                 D_Q^-1 /
+
+    discrete.E = @(rtz) [absA0 * (0.25 * d_p ./ rtz) * absA0T, sparse(discrete.nP, discrete.nQ); ...
+                                  sparse(discrete.nQ, discrete.nP), d_q];
 
 % System Matrix
 %
-%     /    0      -A_pq \
-% A = |                 |
-%     \ D_q A_qp    0   /
+%     /      0         -A_0 \
+% A = |                     |
+%     \ (A_0 - A_C)^T    0  /
 
-    discrete.A = [sparse(discrete.nP, discrete.nP), -1e-5 * network.PQ; ...
-                            1e5 * d_q * network.QP, sparse(discrete.nQ, discrete.nQ)];
+    discrete.A = [sparse(discrete.nP, discrete.nP), -1e-5 * network.A0; ...
+                  1e5 * (network.A0 - network.Ac)', sparse(discrete.nQ, discrete.nQ)];
+
+    discrete.As = discrete.A;
 
 % Input matrix
 %
-%     /    0        B_d \
-% B = |                 |
-%     \ D_q B_s^T    0  /
+%     /   0     B_d \
+% B = |             |
+%     \ B_s^T    0  /
 
     discrete.B = [sparse(discrete.nP, network.nSupply), 1e-5 * network.Bd; ... 
-                               1e5 * d_q * network.Bs', sparse(discrete.nQ, network.nDemand)];
+                                     1e5 * network.Bs', sparse(discrete.nQ, network.nDemand)];
 
 % Source matrix
 %
-%     /    0    \
-% F = |         |
-%     \ D_q F_c /
+%     /  0  \
+% F = |     |
+%     \ F_c /
 
     discrete.F = [sparse(discrete.nP, max(network.nCompressor, 1)); ...
-                  1e5 * d_q * network.Fc'];
+                  1e5 * network.Fc'];
 
 % Output Matrix
 %
-%     /    0     |B_s| \
-% C = |                |
-%     \ |B_d^T|    0   /
+%     /    0   -B_s \
+% C = |             |
+%     \ B_d^T    0  /
 
-    discrete.C = [sparse(network.nSupply, discrete.nP), abs(network.Bs); ...
-                                      abs(network.Bd'), sparse(network.nDemand, discrete.nQ)];
+    discrete.C = [sparse(network.nSupply, discrete.nP), -network.Bs; ...
+                                           network.Bd', sparse(network.nDemand, discrete.nQ)];
 
 % Nonlinear vector field
 %
-%     /                        0                            \
-% f = |                                                     |
-%     \ D_F * ( q * |q| ) / ( |A_0^T| * p + |A_S^T| * u_S ) /
+%     /                                        0                                                            \
+% f = |                                                                                                     |
+%     \ -D_G * ( |A_0^T| * p + |B_S^T| * u_S ) - D_Q^-1 D_F * ( q * |q| ) / ( |A_0^T| * p + |B_S^T| * u_S ) /
 
-    f_local = @(p,q,us,rtz) [zeros(discrete.nP, 1); ...
-                             -( (d_g ./ rtz) .* p2q(p,us) ...
-                              + (d_f .* rtz) .* F_k .* ((q .* abs(q)) ./ p2q(p,us)))];
+    f_local = @(p,q) [zeros(discrete.nP, 1); ...
+                          -( d_g .* p + (d_q * d_f) .* F_k .* ((q .* abs(q)) ./ p))];
 
-    discrete.f = @(xs,x,u,p,z) discrete.A * xs + f_local(xs(iP) + x(iP),xs(iQ) + x(iQ),u(iS),p(1) * p(2) * z);
+    discrete.f = @(xs,x,u,rtz) f_local(p2q(xs(iP) + x(iP),u(iS))./rtz,xs(iQ) + x(iQ));
 
-% Local Jacobian % TODO add gravity derivative
+% Local Jacobian
 %
-%         /   0        0   \
-% J = A - |                |
-%         \ df/dp    df/dq /
+%         /   0                0   \
+% J = A - |                        |
+%         \ df/dp + dg/dp    df/dq /
 
-    J_local = @(p,q,us,rtz) discrete.A - [sparse(discrete.nP,discrete.nP + discrete.nQ); ...
-                                          spdiags( (d_f .* rtz) .* F_k .*  (q .* abs(q)) ./ p2q(p,us).^2, 0, discrete.nQ, discrete.nQ) * p2q(1,sparse(network.nSupply,discrete.nP)), ... 
-                                          spdiags( (d_f .* rtz) .* F_k .* (2.0 * abs(q)) ./ p2q(p,us), 0, discrete.nQ, discrete.nQ) ];
+    J_local = @(p,q,rtz) discrete.A - [sparse(discrete.nP,discrete.nP + discrete.nQ); ...
+                                       spdiags( (d_q * d_f .* rtz) .* F_k .*  (q .* abs(q)) ./ p.^2 + d_g, 0, discrete.nQ, discrete.nQ) * p2q(1,sparse(network.nSupply,discrete.nP)), ... 
+                                       spdiags( (d_q * d_f .* rtz) .* F_k .* (2.0 * abs(q)) ./ p, 0, discrete.nQ, discrete.nQ) ];
 
-    discrete.J = @(xs,x,u,p,z) J_local(xs(iP) + x(iP),xs(iQ) + x(iQ),u(iS),p(1) * p(2) * z);
+    discrete.J = @(xs,x,u,rtz) J_local(p2q(xs(iP) + x(iP),u(iS)),xs(iQ) + x(iQ),rtz);
 end
 

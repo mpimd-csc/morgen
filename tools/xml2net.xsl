@@ -1,18 +1,16 @@
 <?xml version="1.0"?>
 <!--
 project: morgen - Model Order Reduction for Gas and Energy Networks
-version: 0.9 (2020-11-24)
+version: 0.99 (2021-04-12)
 authors: C. Himpe (0000-0003-2194-6754)
-license: 2-Clause BSD (opensource.org/licenses/BSD-2-clause)
-summary: Convert GasLib xml to MORGEN csv
+license: BSD-2-Clause (opensource.org/licenses/BSD-2-clause)
+summary: Convert GasLib xml to MORGEN csv net
 -->
 
 <!--
-Add the line:
+Usage:
 
-<?xml-stylesheet href="xml2csv.xsl" type="text/xsl" ?>
-
-below the xml declaration, and convert the xml file with an XSLT processor.
+    xsltproc -o GasLib-X.csv xml2net.xsl GasLib-X.xml
 -->
 
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"

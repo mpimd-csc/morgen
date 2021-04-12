@@ -1,9 +1,9 @@
 function plot_offline(plot_path,name,data,labels,compact)
 %%% project: morgen - Model Order Reduction for Gas and Energy Networks
-%%% version: 0.9 (2020-01-24)
+%%% version: 0.99 (2021-04-12)
 %%% authors: C. Himpe (0000-0003-2194-6754), S. Grundel (0000-0002-0209-6566)
-%%% license: 2-Clause BSD (opensource.org/licenses/BSD-2-clause)
-%%% summary: plot offline time as horizontal bars.
+%%% license: BSD-2-Clause (opensource.org/licenses/BSD-2-clause)
+%%% summary: Plot offline time as horizontal bars.
 
     ndata = numel(labels);
 
@@ -20,10 +20,10 @@ function plot_offline(plot_path,name,data,labels,compact)
 
     if exist('OCTAVE_VERSION','builtin')
 
-        set(get(h,'Children'),'CData',lines12(ndata));
+        set(get(h,'Children'),'CData',lines13(ndata));
     else
 
-        set(h,'CData',lines12(ndata));
+        set(h,'CData',lines13(ndata));
     end%if
 
     set(gca,'YDir','reverse');

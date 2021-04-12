@@ -1,11 +1,12 @@
 function steady = steadystate(discrete,scenario,config)
 %%% project: morgen - Model Order Reduction for Gas and Energy Networks
-%%% version: 0.9 (2020-11-24)
+%%% version: 0.99 (2021-04-12)
 %%% authors: C. Himpe (0000-0003-2194-6754), S. Grundel (0000-0002-0209-6566)
-%%% license: 2-Clause BSD (opensource.org/licenses/BSD-2-clause)
+%%% license: BSD-2-Clause (opensource.org/licenses/BSD-2-clause)
 %%% summary: Caching steady-state computation.
 
-    persistent p0;
+    persistent T0;
+    persistent Rs;
     persistent xs;
     persistent ys;
     persistent z0;
@@ -14,17 +15,18 @@ function steady = steadystate(discrete,scenario,config)
     persistent iter2;
 
     % Caching: Reusable steady state
-    if isempty(p0) || ...
-       not((p0(1) == scenario.T0) && (p0(2) == scenario.Rs))
+    if isempty(T0) || isempty(Rs) || not((T0 == scenario.T0) && (Rs == scenario.Rs))
 
         clear leastnorm;
 
-        x0 = sparse(discrete.nP+discrete.nQ,1);
-        p0 = [scenario.T0; scenario.Rs];
+        x0 = discrete.x0;
+        T0 = scenario.T0;
+        Rs = scenario.Rs;
+        rt = T0 * Rs;
 
         % Right-hand side
         b = -(discrete.B * scenario.us + discrete.F * scenario.cp);
-        f = @(x,z) discrete.f(x0,x,scenario.us,p0,z);
+        f = @(x,z) discrete.f(x0,x,scenario.us,rt * z);
 
 %
 %  /  0  Apq \ / ps \   /   -bpd    \
@@ -73,7 +75,7 @@ function steady = steadystate(discrete,scenario,config)
         if (err > config.maxerror)
 
             warning('off','Octave:lu:sparse_input');
-            [AL,AU,AP] = lu(discrete.E(p0,z0) - config.dt * discrete.A,'vector');
+            [AL,AU,AP] = lu(discrete.E(rt*z0) - config.dt * discrete.A,'vector');
 
             while (err > config.maxerror) && (iter2 < config.maxiter)
 
@@ -113,7 +115,7 @@ function x = leastnorm(b,A)
 
     if not(exist('OCTAVE_VERSION','builtin'))
 
-        if (nargin == 2)
+        if 2 == nargin
 
             [Q,R,P] = qr(A',0);
         end%if
@@ -121,9 +123,9 @@ function x = leastnorm(b,A)
         x = Q * (R' \ b(P));
     else
 
-        if (nargin == 2)
+        if 2 == nargin
 
-            [Q,R] = qr(A',0);
+            [Q,R] = qr(full(A'),0);
         end%if
     
         x = Q * (R' \ b);

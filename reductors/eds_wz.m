@@ -1,28 +1,31 @@
 function ROM = eds_wz(solver,discrete,scenario,config)
 %%% project: morgen - Model Order Reduction for Gas and Energy Networks
-%%% version: 0.9 (2020-11-24)
+%%% version: 0.99 (2021-04-12)
 %%% authors: C. Himpe (0000-0003-2194-6754), S. Grundel (0000-0002-0209-6566)
-%%% license: 2-Clause BSD (opensource.org/licenses/BSD-2-clause)
-%%% summary: Structured empirical non-symmetric-cross-Gramian-based dominant subspaces.
+%%% license: BSD-2-Clause (opensource.org/licenses/BSD-2-clause)
+%%% summary: Structured nonlinear empirical non-symmetric-cross-Gramian-based dominant subspaces.
 
     global ODE;
 
     name = 'Structured Empirical Dominant Subspaces (WZ)';
     fprintf('%s\n\n',name);
 
-    ODE = @(f,g,t,x0,u,p) solver(setfields(discrete,'C',cmov(numel(g(x0,u(0),p,0)) == numel(x0),1,discrete.C)), ...
-                                 setfields(scenario,'ut',u,'T0',p(1),'Rs',p(2)), ...
-                                 setfields(config.solver,'x0',x0)).y;
+    iP = 1:discrete.nP;
+    iQ = discrete.nP+1:discrete.nP+discrete.nQ;
 
     s = [discrete.nPorts, discrete.nP + discrete.nQ, discrete.nPorts];
     t = [config.solver.dt, scenario.Tf];
 
-    WZ = emgr([],@(x,u,p,t) 1,s,t,'x',config.samples,[0,0,0,1,1,0,1,0,0,0,0,0,0],config.excitation,[],[],[],[]);
+    ODE = @(f,g,t,x0,u,p) solver(setfields(discrete,'C',cmov(numel(g(x0,u(0),p,0))==numel(x0),1,discrete.C),'x0',x0), ...
+                                 setfields(scenario,'ut',u,'T0',p(1),'Rs',p(2)), ...
+                                 config.solver).y;
 
-    [uz,dz,vz] = svds(WZ(1:discrete.nP,1:discrete.nP),config.rom_max);
+    WZ = emgr(@() 0,@(x,u,p,t) discrete.C * x,s,t,'x',config.samples,[3,0,0,1,1,0,1,0,0,0,0,0,0],config.excitation);
+
+    [uz,dz,vz] = svds(WZ(iP,iP),config.rom_max);
     [LP,~,~] = svds([uz.*diag(dz)',vz.*diag(dz)'],config.rom_max);
 
-    [uz,dz,vz] = svds(WZ(discrete.nP+1:end,discrete.nP+1:end),config.rom_max);
+    [uz,dz,vz] = svds(WZ(iQ,iQ),config.rom_max);
     [LQ,~,~] = svds([uz.*diag(dz)',vz.*diag(dz)'],config.rom_max);
 
     ROM = @(n) make_rom(name,discrete,{LP;LQ},n);

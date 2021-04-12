@@ -1,36 +1,40 @@
-morgen -- Model Order Reduction for Gas and Energy Networks (Version 0.9)
-=========================================================================
+morgen -- Model Order Reduction for Gas and Energy Networks (Version 0.99)
+==========================================================================
 
 **morgen** is an open-source MATLAB and OCTAVE test platform to compare models,
-solvers, and model reduction methods for gas networks and other network systems,
-based on the isothermal Euler equations, against each other.
+solvers, and model reduction methods for gas networks and other energy network
+systems, based on the isothermal Euler equations, against each other.
 
 ## Development Guidelines
 
-* NEVER BREAK THE MASTER BRANCH **!**
-* Source headers include: project, version, authors, license, summary **!**
+* The main branch must complete tests successfully **!**
+* Source headers must include: project, version, authors, license, summary **!**
 * Understand [closures](https://en.wikipedia.org/wiki/Closure_%28computer_programming%29) **!**
 
 ## Compatibility
 
 * Mathworks [MATLAB](https://matlab.com) >= 2020b
-* GNU [Octave](https://octave.org) >= 6.1 (tested on 6.0.92)
+* GNU [Octave](https://octave.org) >= 6.1
+
+## Dependencies
+
+* [emgr](https://gramian.de) == 5.9 (included)
 
 ## License
 
-**morgen** is licensed under the [2-Clause-BSD](https://opensource.org/licenses/BSD-2-Clause) license.
+**morgen** is licensed under the [BSD-2-Clause](https://opensource.org/licenses/BSD-2-Clause) license.
 
 ## Disclaimer
 
-**morgen** is research software and under development.
+**morgen** is research software and under ongoing development.
 
 ## Citation
 
 Please cite the **morgen** platform via its companion paper:
 
-P. Benner, S. Grundel, C. Himpe:
+C. Himpe, S. Grundel, P. Benner:
 **Moder Order Reduction for Gas and Energy Networks**;
-arXiv (math.OC): 2011.12099, 2020.
+arXiv (math.OC): 2011.12099, 2021.
 [arXiv:2011.12099](https://arxiv.org/abs/2011.12099)
 
 ## Getting Started
@@ -38,8 +42,8 @@ arXiv (math.OC): 2011.12099, 2020.
 To try **morgen**:
 
 ```
-> SETUP         % adds the "tests" folder to the path and lists scripts
-> sim_pipeline  % runs a pipeline test code
+> SETUP % adds the "tests" folder to the path and lists scripts
+> DEMO  % runs a sample pipeline model reduction code
 ```
 
 ## Usage
@@ -52,11 +56,11 @@ morgen(network_id,scenario_id,model_id,solver_id,reductor_ids,varargin)
 
 and has five mandatory arguments:
 
-* `network_id`  (string) The network identifier
-* `scenario_id` (string) The scenario identifier
-* `model_id`    (string) The model identifier
-* `solver_id`   (string) The solver identifier
-* `reductor_ids` (cell)  An array of reductor identifiers
+* `network_id`   (string) The network identifier
+* `scenario_id`  (string) The scenario identifier
+* `model_id`     (string) The model identifier
+* `solver_id`    (string) The solver identifier
+* `reductor_ids`  (cell)  An array of reductor identifiers
 
 as well as additional variable length argument list:
 
@@ -67,6 +71,7 @@ all of which are described below:
 * `dt=X`    - Override requested time step in configuration with X (in seconds)
 * `ys=X`    - Force minimum y-scale for error plots with 10^X (default: -16)
 * `ord=X`   - Override evaluation order in configuration with X (natural number)
+* `pid=X`   - Add custom string identifier to plots (default: '')
 * `notest`  - Do not test the reduced order models
 * `compact` - Display plots all in one figure
 
@@ -121,12 +126,13 @@ All available network datasets are listed with the network's number of
 
 ##### Realistic
 
-* `DeWS00`     - Belgium (`n0=20, nS=6, nD=9`)
-* `GasLib134`  - Greece  (`n0=?, nS=3, nD=45`)
-* `GasLib582`  - Germany (`n0=?, nS=31, nD=129`)
-* `GasLib4197` - Germany (`n0=?, nS=11, nD=1009`)
+* `DeWS00`      - Belgium (`n0=20, nS=6, nD=9`)
+* `EkhDLetal19` - Ireland (`n0=26, nS=3, nD=10`)
+* `GasLib134`   - Greece  (`n0=?, nS=3,  nD=45`)
+* `GasLib582`   - Germany (`n0=?, nS=31, nD=129`)
+* `GasLib4197`  - Germany (`n0=?, nS=11, nD=1009`)
 
-#### Origins
+#### Data Origin
 
 The GasLib network data-sets are derived from:
 
@@ -140,10 +146,10 @@ and licensed under **CC-BY**, see: https://gaslib.zib.de
 #### File Format
 
 A network is encoded in a [CSV](https://en.wikipedia.org/wiki/Comma-separated_values) file with the file extension `.net`.
-The first line is a comment header with a description of the columns, their meaning, and units. 
+The first line is a comment header with a description of the columns, their meaning, and units.
 Each line below the first holds one edge definition with the columns:
 
-* Edge type (P:pipe, S:shortpipe, C:compressor, V:valve)
+* Edge type (`P`:pipe, `S`:shortpipe, `C`:compressor, `V`:valve)
 * Start node identifier (positive integer)
 * End node identifier (positive integer)
 * Pipe lengths [m] (positive real)
@@ -156,7 +162,7 @@ Note, currently only positive integers can be used as start and end identifiers.
 
 ### Scenario
 
-A scenario data set describes the boundary values and external inhomogeneties of the gas net.
+A scenario data set describes the boundary values and external inhomogeneities of the gas net.
 Transient behaviour of supply and demand functions is represented as step functions in compressed form by only marking changes.
 Each network has a training scenario (`training.ini`), which has constant boundary values for reduced order model assembly.
 
@@ -168,7 +174,7 @@ Each line holds a key-value pair, for the following keys:
 * `T0` - Average ambient temperature [C]
 * `Rs` - Average specific gas constant [J/(kg*K)]
 * `tH` - Time horizon [s]
-* `vs` - Valve setting [1] (pipe separated list of {0,1}) !TODO
+* `vs` - Valve setting [1] (pipe separated list of {0,1})
 * `cp` - Compressor (output) pressure [bar] (pipe separated list)
 * `up` - Supply pressure changes [bar] (pipe separated list of semi-colon separated series)
 * `uq` - Demand flow changes [kg/s] (pipe separated list of semi-colon separated series)
@@ -202,25 +208,28 @@ and an (uni-directionally coupled algebraic) output equation.
   - `.nP`     (**scalar**) Number of pressure states
   - `.nQ`     (**scalar**) Number of mass-flux states
   - `.nPorts` (**scalar**) Number of ports
-  - `.E`      (**handle**) Mass matrix function handle Epz = E(p,z)
+  - `.E`      (**handle**) Mass matrix function handle Ertz = E(rtz)
   - `.A`      (**matrix**) System matrix
+  - `.As`     (**matrix**) Copy of the system matrix (see template)
   - `.B`      (**matrix**) Input matrix (models boundary nodes)
   - `.F`      (**matrix**) Source matrix (models the compressor action)
   - `.C`      (**matrix**) Output matrix (sensors at boundary nodes)
-  - `.f`      (**handle**) Nonlinear vector field x = f(xs,x,u,p,z)
-  - `.J`      (**handle**) Jacobian x = J(xs,x,u,p,z)
+  - `.f`      (**handle**) Nonlinear vector field x = f(xs,x,u,rtz)
+  - `.J`      (**handle**) Jacobian x = J(xs,x,u,rtz)
 
 #### Available
 
 * `ode_mid` - ODE model using the mid-point discretization
-* `ode_end` - ODE model using the end-point discretization
+* `ode_end` - ODE model using the end-point discretization (port-Hamiltonian)
 
 #### Notes
 
+* The argument `xs` is the steady state computed in the solver.
 * The argument `x` in nonlinearity `f` and Jacobian `J` refers to the difference to the steady-state.
   This means the `xs+x` yields the actual state.
 * Only the components `E`, `f` and `J` are parametrized.
-  Particularly, `A` and `B` do not depend on the parameter p.
+  Particularly, `A` and `B` do not depend on the parameter.
+* The argument `rtz` is the product `Rs*T0*z0` formed in the solver.
 
 ### Solver
 
@@ -239,7 +248,7 @@ The prerequisite steady-state initial value is computed from the scenario's boun
 
 #### Returns
 
-* `solution` (**struct**)
+* `solution`  (**struct**)
   * `t`       (**vector**) Time-steps vector
   * `u`       (**matrix**) Discrete inputs-times-steps trajectory
   * `y`       (**matrix**) Discrete outputs-times-steps trajectory
@@ -284,18 +293,25 @@ aiming to approximate the input-output (boundary-quantity-of-interest) behavior.
 
 These structured reductors approximate pressure and mass-flux components separately:
 
-* `pod_r`   (Structured Proper Orthogonal Decomposition)
-* `eds_ro`  (Structured Empirical Dominant Subspaces)
-* `eds_wx`  (Structured Empirical Cross-Gramian-Based Dominant Subspaces)
-* `eds_wz`  (Structured Empirical Non-Symmetric-Cross-Gramian-Based Dominant Subspaces)
-* `bpod_ro` (Structured Empirical Balanced Proper Orthogonal Decomposition)
-* `ebt_ro`  (Structured Empirical Balanced Truncation)
-* `ebt_wx`  (Structured Empirical Cross-Gramian-Based Balanced Truncation)
-* `ebt_wz`  (Structured Empirical Non-Symmetric-Cross-Gramian-Based Balanced Truncation)
-* `ebg_ro`  (Structured Empirical Balanced Gains)
-* `ebg_wx`  (Structured Empirical Cross-Gramian-Based Balanced Gains)
-* `ebg_wz`  (Structured Empirical Non-Symmetric-Cross-Gramian-Based Balanced Gains)
-* `dmd_r`   (Structured Dynamic Mode Decomposition Galerkin)
+* `pod_r`                 (Structured Proper Orthogonal Decomposition)
+* `eds_ro` / `eds_ro_l`   (Structured Empirical Dominant Subspaces)
+* `eds_wx` / `eds_wx_l`   (Structured Empirical Cross-Gramian-Based Dominant Subspaces)
+* `eds_wz` / `eds_wz_l`   (Structured Empirical Non-Symmetric-Cross-Gramian-Based Dominant Subspaces)
+* `bpod_ro` / `bpod_ro_l` (Structured Empirical Balanced Proper Orthogonal Decomposition)
+* `ebt_ro` / `ebt_ro_l`   (Structured Empirical Balanced Truncation)
+* `ebt_wx` / `ebt_wx_l`   (Structured Empirical Cross-Gramian-Based Balanced Truncation)
+* `ebt_wz` / `ebt_wz_l`   (Structured Empirical Non-Symmetric-Cross-Gramian-Based Balanced Truncation)
+* `gopod_r`               (Structured Goal-Oriented Proper Orthogonal Decomposition)
+* `ebg_ro` / `ebg_ro_l`   (Structured Empirical Balanced Gains)
+* `ebg_wx` / `ebg_wx_l`   (Structured Empirical Cross-Gramian-Based Balanced Gains)
+* `ebg_wz`  /`ebg_wz_l`   (Structured Empirical Non-Symmetric-Cross-Gramian-Based Balanced Gains)
+* `dmd_r`                 (Structured Dynamic Mode Decomposition Galerkin)
+
+All reductors utilizing observability information are available in two variants.
+By default the nonlinear variant (no suffix) is used. The `_l` suffix signifies
+a linear variant of the reductor, which assumes a dual system is applicable.
+While either method can be applied to both, `ode_mid` and `ode_end`, models,
+theory suggest to use the linear variant only with the port-Hamiltonian `ode_end`.
 
 ### Loading Reduced Order Models
 
@@ -303,7 +319,9 @@ Reduced order models are saved in the `z_roms` folder.
 A reduced order model is saved by storing the projectors and encoding the associated:
 network, model, and reductor in the filename as follows:
 
-`network--model--reductor.rom`
+`network--model--reductor--pid.rom`
+
+with `pid` being custom identifier configurable via optional arguments.
 
 To load a reduced order model provide a filename of a saved reduced order model instead of the reductor identifier.
 
@@ -352,42 +370,54 @@ if not found hard-coded default values are used.
 All input temperatures, i.e. in:
 
 * `morgen.ini` configuration
-* `XXXXXX.ini` scenario 
+* `XXXXXX.ini` scenario
 
 and all output temperatures are in **Celsius**.
 Internally, all temperatures are in **Kelvin**.
 
 ## Tools
 
-* `xml2csv.xsl`    Converts [gaslib](http://gaslib.zib.de) `.net` XML network definitions into **MORGEN**-compatible `.net` CSV network definitions via XSLTproc
+* `xml2net.xsl`    Converts [gaslib](https://gaslib.zib.de) `.net` XML network definitions into **MORGEN**-compatible `.net` CSV network definitions via XSLTproc:
 ```
-xsltproc -o GasLib-X.csv xml2csv.xsl GasLib-X.xml
+xsltproc -o GasLib-X.csv xml2net.xsl GasLib-X.xml
 ```
-* `json2csv.m`     Converts `.json` network definitions into **MORGEN**-compatible `.net` CSV network definitions
-* `mf2vf.m`        Converts m3/h to kg/s 
-* `randscen.m`     Generates a random scenario to a training scenario
+* `csv2net.m`      Converts [SciGRID_Gas](https://gas.scigrid.de) `.csv` CSV network definitions into **MORGEN**-compatible `.net` CSV network definitions:
+```
+csv2net('X_Y_PipeSegments.csv','myX_Y')
+```
+* `json2net.m`     Converts [MathEnergy](https://mathenergy.de) `.json` network definitions into **MORGEN**-compatible `.net` CSV network definitions:
+```
+json2net('X.json','myX')
+```
+* `mf2vf.m`        Converts m3/h to kg/s
+* `randscen.m`     Generates a random scenario given a training scenario
 * `cmp_friction.m` Compare friction factors
 
 ## Log
 
+* 0.99 (2021-04-12): [doi:10.5281/zenodo.4680265](https://doi.org/10.5281/zenodo.4680265)
+    * IMPROVED model structure
+    * ADDED gopod reductor
+    * ADDED linear reductor variants
+    * ADDED SciGRID_gas CSV converter
+    * ADDED DEMO code
+
 * 0.9 (2020-11-24): [doi:10.5281/zenodo.4288510](https://doi.org/10.5281/zenodo.4288510)
-  * Initial release
+    * Initial release
 
 ## Roadmap
 
 ### 1.0
 
-* ADD valves as affine linear component
-* FIX Octave incompatibilities in `format_network`
-* FIX slow `ode23s` in Octave
-* TEST network **partDE**
-* ADD documentation
+* [Model] ADD scenario valve handling
+* [Octave] FIX incompatibilities in `format_network` (`textscan`)
+* [Octave] FIX slow `ode23s`
 
-### 1.1
+### 2.0
 
-* TEST network **SciGRID_gas**
-* ADD model **port-Hamiltonian ODE**
-* ADD reductors
+* [Model] ADD DAE models
+* [Model] ADD tuning factor
+* [Hyper] ADD hyper-reductors (DMD, DEIM, Q-DEIM, Numerical linearization)
 
 ## Authors
 

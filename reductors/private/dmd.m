@@ -1,8 +1,8 @@
 function A = dmd(X)
 %%% project: morgen - Model Order Reduction for Gas and Energy Networks
-%%% version: 0.9 (2020-11-24)
+%%% version: 0.99 (2021-04-12)
 %%% authors: C. Himpe (0000-0003-2194-6754)
-%%% license: 2-Clause BSD (opensource.org/licenses/BSD-2-clause)
+%%% license: BSD-2-Clause (opensource.org/licenses/BSD-2-clause)
 %%% summary: Dynamic mode decomposition with scaling.
 
     s = 1.0 ./ max(eps,vecnorm(X(:,2:end),2,1));

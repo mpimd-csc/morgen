@@ -1,30 +1,38 @@
 function ROM = ebg_ro(solver,discrete,scenario,config)
 %%% project: morgen - Model Order Reduction for Gas and Energy Networks
-%%% version: 0.9 (2020-11-24)
+%%% version: 0.99 (2021-04-12)
 %%% authors: C. Himpe (0000-0003-2194-6754), S. Grundel (0000-0002-0209-6566)
-%%% license: 2-Clause BSD (opensource.org/licenses/BSD-2-clause)
-%%% summary: Structured empirical balanced gains.
+%%% license: BSD-2-Clause (opensource.org/licenses/BSD-2-clause)
+%%% summary: Structured nonlinear empirical balanced gains.
 
     global ODE;
 
     name = 'Structured Empirical Balanced Gains (WR + WO)';
     fprintf('%s\n\n',name);
 
-    ODE = @(f,g,t,x0,u,p) solver(setfields(discrete,'C',cmov(numel(g(x0,u(0),p,0))==numel(x0),1,discrete.C)), ...
-                                 setfields(scenario,'ut',u,'T0',p(1),'Rs',p(2)), ...
-                                 setfields(config.solver,'x0',x0)).y;
+    iP = 1:discrete.nP;
+    iQ = discrete.nP+1:discrete.nP+discrete.nQ;
 
     s = [discrete.nPorts,discrete.nP+discrete.nQ,discrete.nPorts];
     t = [config.solver.dt,scenario.Tf];
 
-    WR = emgr([],@(x,u,p,t) 1,s,t,'c',config.samples,[0,0,0,1,1,0,0,0,0,0,0,0,0],config.excitation);
-    WO = emgr([],@(x,u,p,t) 1,s,t,'o',config.samples,[0,0,0,1,1,0,0,0,0,0,0,0,0],config.excitation);
+    ODE = @(f,g,t,x0,u,p) solver(setfields(discrete,'C',1,'x0',x0), ...
+                                 setfields(scenario,'ut',u,'T0',p(1),'Rs',p(2)), ...
+                                 config.solver).y;
 
-    [LP,SP,RP] = balro(WR(1:discrete.nP,1:discrete.nP)*WO(1:discrete.nP,1:discrete.nP),config.rom_max);
-    [LQ,SQ,RQ] = balro(WR(discrete.nP+1:end,discrete.nP+1:end)*WO(discrete.nP+1:end,discrete.nP+1:end),config.rom_max);
+    WR = emgr(@() 0,@() 1,s,t,'c',config.samples,[3,0,0,1,1,0,0,0,0,0,0,0,0],config.excitation);
 
-    [LP,~,RP] = balgn(LP,SP,RP,discrete.C(:,1:discrete.nP));
-    [LQ,~,RQ] = balgn(LQ,SQ,RQ,discrete.C(:,discrete.nP+1:end));
+    ODE = @(f,g,t,x0,u,p) solver(setfields(discrete,'x0',x0), ...
+                                 setfields(scenario,'ut',u,'T0',p(1),'Rs',p(2)), ...
+                                 config.solver).y;
+
+    WO = emgr(@() 0,@(x,u,p,t) discrete.C * x,s,t,'o',config.samples,[3,0,0,1,1,0,0,0,0,0,0,0,0],config.excitation);
+
+    [LP,SP,RP] = balro(WR(iP,iP)*WO(iP,iP),config.rom_max);
+    [LQ,SQ,RQ] = balro(WR(iQ,iQ)*WO(iQ,iQ),config.rom_max);
+
+    [LP,~,RP] = balgn(LP,SP,RP,discrete.C(:,iP));
+    [LQ,~,RQ] = balgn(LQ,SQ,RQ,discrete.C(:,iQ));
 
     ROM = @(n) make_rom(name,discrete,{LP,RP;LQ,RQ},n);
     ODE = [];

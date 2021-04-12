@@ -1,9 +1,9 @@
 function plot_output(plot_path,name,solution,network,compact)
 %%% project: morgen - Model Order Reduction for Gas and Energy Networks
-%%% version: 0.9 (2020-01-24)
+%%% version: 0.99 (2021-04-12)
 %%% authors: C. Himpe (0000-0003-2194-6754), S. Grundel (0000-0002-0209-6566)
-%%% license: 2-Clause BSD (opensource.org/licenses/BSD-2-clause)
-%%% summary: plot mass flow at supply nodes and pressure at demand nodes.
+%%% license: BSD-2-Clause License (opensource.org/licenses/BSD-2-clause)
+%%% summary: Plot mass flow at supply nodes and pressure at demand nodes.
 
     if compact
 
@@ -11,6 +11,7 @@ function plot_output(plot_path,name,solution,network,compact)
         b = 4;
 
         if not(exist('OCTAVE_VERSION','builtin'))
+
             sgtitle(name,'Interpreter','None');
         end%if
     else

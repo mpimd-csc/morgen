@@ -1,8 +1,8 @@
 function thunklog(s)
 %%% project: morgen - Model Order Reduction for Gas and Energy Networks
-%%% version: 0.9 (2020-11-24)
+%%% version: 0.99 (2021-04-12)
 %%% authors: C. Himpe (0000-0003-2194-6754), S. Grundel (0000-0002-0209-6566)
-%%% license: 2-Clause BSD (opensource.org/licenses/BSD-2-clause)
+%%% license: BSD-2-Clause (opensource.org/licenses/BSD-2-clause)
 %%% summary: Auto linebreak logger.
 
     persistent col;
@@ -12,11 +12,11 @@ function thunklog(s)
 
         case 1
 
-            if (s == 0)
+            if 0 == s
 
                 colmax = [];
                 col = [];
-            elseif (s == -1)
+            elseif -1 == s
 
                 col = col - not(isempty(col));
                 fprintf('\b');
@@ -30,10 +30,10 @@ function thunklog(s)
 
             if not(isempty(col))
 
-                if (col == 1)
+                if 1 == col
 
                     fprintf('   ');
-                elseif (col > colmax)
+                elseif col > colmax
 
                     fprintf('\n   ');
                     col = 1;

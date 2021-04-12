@@ -1,12 +1,12 @@
 function refined_network = format_network(network_path,config)
 %%% project: morgen - Model Order Reduction for Gas and Energy Networks
-%%% version: 0.9 (2020-11-24)
+%%% version: 0.99 (2021-04-12)
 %%% authors: C. Himpe (0000-0003-2194-6754), S. Grundel (0000-0002-0209-6566)
-%%% license: 2-Clause BSD (opensource.org/licenses/BSD-2-clause)
+%%% license: BSD-2-Clause (opensource.org/licenses/BSD-2-clause)
 %%% summary: Read net file and return a network structure.
 
 % TODO valves
-% FIXME textscan padding and broadcasting in lines 60,61 in Octave (fails for networks with compressors)
+% FIXME [Octave] textscan padding (S & C)
 
     % Load CSV file into cell array of columns
     if isfile(network_path)
@@ -58,8 +58,10 @@ function refined_network = format_network(network_path,config)
 
     refined_network.node_op(supply_nodes,:) = [];
     refined_network.node_op(:,supply_nodes) = [];
-    refined_network.node_op = refined_network.node_op ./ vecnorm(refined_network.node_op,2,1);
-    refined_network.edge_op = refined_network.edge_op ./ vecnorm(refined_network.edge_op,2,1);  
+
+    % Sparse diagonal is used here, since Octave cannot handle sparse matrices and broadcasting
+    refined_network.node_op = refined_network.node_op * spdiags(1.0./full(vecnorm(refined_network.node_op,2,1))',0,size(refined_network.node_op,2),size(refined_network.node_op,2));
+    refined_network.edge_op = refined_network.edge_op * spdiags(1.0./full(vecnorm(refined_network.edge_op,2,1))',0,size(refined_network.edge_op,2),size(refined_network.edge_op,2));
 
 %% Quantify network
 
@@ -89,22 +91,18 @@ function refined_network = format_network(network_path,config)
     refined_network.Fc = sparse(1:refined_network.nCompressor,compressor_edges,-1, ...
                                 max(1,refined_network.nCompressor),refined_network.nEdges);
 
-    % PQ reduced incidence matrix (remove all zero rows and supply node rows)
-    refined_network.PQ = incidence(setdiff(find(any(incidence,2)),supply_nodes),:); % Remove all supply nodes!
+    % Reduced incidence matrix (remove all zero rows and supply node rows)
+    refined_network.A0 = incidence(setdiff(find(any(incidence,2)),supply_nodes),:); % Remove all supply nodes!
 
     % Assemble demand operator
-    refined_network.Bd = refined_network.PQ(:,demand_edges);
+    refined_network.Bd = refined_network.A0(:,demand_edges);
     refined_network.Bd(refined_network.Bd < 0) = 0;
 
-    % QP transposed reduced incidence matrix (edges x nodes)
-    refined_network.QP = refined_network.PQ';
-%
-    % Correct incidence for compressors
-    tmp = refined_network.QP(compressor_edges,:);
-
-    tmp(tmp < 0) = 0;
-
-    refined_network.QP(compressor_edges,:) = tmp;
+    % Reduced incidence matrix of compressor outlets
+    cc = refined_network.A0(:,compressor_edges);
+    cc(cc > 0) = 0;
+    refined_network.Ac = sparse(size(refined_network.A0,1),size(refined_network.A0,2));
+    refined_network.Ac(:,compressor_edges) = cc;
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

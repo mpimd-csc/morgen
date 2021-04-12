@@ -1,8 +1,8 @@
 function R = morgen(network_id,scenario_id,model_id,solver_id,reductor_ids,varargin)
 %%% project: morgen - Model Order Reduction for Gas and Energy Networks
-%%% version: 0.9 (2020-11-24)
+%%% version: 0.99 (2021-04-12)
 %%% authors: C. Himpe (0000-0003-2194-6754), S. Grundel (0000-0002-0209-6566)
-%%% license: 2-Clause BSD (opensource.org/licenses/BSD-2-clause)
+%%% license: BSD-2-Clause (opensource.org/licenses/BSD-2-clause)
 %%% summary: Model reduction test platform and task master.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -10,7 +10,7 @@ function R = morgen(network_id,scenario_id,model_id,solver_id,reductor_ids,varar
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     % Version constant
-    MORGEN_VERSION = 0.9;
+    MORGEN_VERSION = 0.99;
 
     % Print welcome message
     fprintf('\n');
@@ -28,7 +28,7 @@ function R = morgen(network_id,scenario_id,model_id,solver_id,reductor_ids,varar
     ocu = onCleanup(@cleanup);
 
     % Report version
-    fprintf(' * Version: _ _ _ _ _ _ _ _ _ _ _ _ _ _ %g \n',MORGEN_VERSION);
+    fprintf(' * Version: _ _ _ _ _ _ _ _ _ _ _ _ _ _ %.2f \n',MORGEN_VERSION);
 
     % Report environment
     if not(exist('OCTAVE_VERSION','builtin'))
@@ -40,9 +40,6 @@ function R = morgen(network_id,scenario_id,model_id,solver_id,reductor_ids,varar
         % Octave has "vec" built-in
         fprintf(' * Environment: _ _ _ _ _ _ _ _ _ _ _ _ OCTAVE \n');
     end%if
-
-    % Prepare return value
-    R = [];
 
     fprintf('\n');
 
@@ -104,9 +101,11 @@ function R = morgen(network_id,scenario_id,model_id,solver_id,reductor_ids,varar
     try
 
         ini = format_ini('morgen.ini');
+        ini_path = 'morgen.ini';
     catch
 
         ini = [];
+        ini_path = 'hard-coded';
     end%try
 
     % Create "plots" folder if not exists
@@ -119,13 +118,7 @@ function R = morgen(network_id,scenario_id,model_id,solver_id,reductor_ids,varar
 
     fprintf('Done.\n\n');
 
-    if isempty(ini)
-
-        fprintf('  < Configuration:_ _ _ _ _ _ _ _ _ _ _ hard-coded \n');
-    else
-
-        fprintf('  < Configuration:_ _ _ _ _ _ _ _ _ _ _ morgen.ini \n');
-    end%if
+    fprintf('  < Configuration:_ _ _ _ _ _ _ _ _ _ _ %s \n',ini_path)
 
     fprintf('\n');
 
@@ -140,14 +133,8 @@ function R = morgen(network_id,scenario_id,model_id,solver_id,reductor_ids,varar
 
     fprintf('## Loading Topology ... ');
 
-    config.network.dt = max(sqrt(eps),inifield(ini,'network_dt',180));
-
-    if not(isempty(varargin)) && any(strncmp(varargin,'dt=',3))
-
-        config.network.dt = sscanf(varargin{strncmp(varargin,'dt=',3)},'dt=%g');
-    end%if
-
-    config.network.vmax = max(sqrt(eps),inifield(ini,'network_vmax',20));
+    config.network.dt = varfield(varargin,'dt',inifield(ini,'network_dt',180));
+    config.network.vmax = inifield(ini,'network_vmax',20);
 
     network = format_network(network_path,config.network);
 
@@ -175,16 +162,16 @@ function R = morgen(network_id,scenario_id,model_id,solver_id,reductor_ids,varar
     fprintf('## Initializing Model ... ');
 
     config.model.reynolds = inifield(ini,'model_reynolds',1e6);
-    config.model.friction_name = inifield(ini,'model_friction','hofer',{'hofer','nikuradse','altshul','schifrinson','pmt1025','igt'});
-    config.model.friction_fun = str2func(['friction_',config.model.friction_name]);
-    config.model.friction = @(D,k) config.model.friction_fun(config.model.reynolds,D,k);
+    friction_name = inifield(ini,'model_friction','hofer',{'hofer','nikuradse','altshul','schifrinson','pmt1025','igt'});
+    friction_fun = str2func(['friction_',friction_name]);
+    config.model.friction = @(D,k) friction_fun(config.model.reynolds,D,k);
 
     discrete = model(network,config.model);
 
     fprintf('Done.\n\n');
 
     fprintf('  < Approx. Reynolds number [1]:_ _ _ _ %u \n',config.model.reynolds);
-    fprintf('  < Friction model: _ _ _ _ _ _ _ _ _ _ %s \n',config.model.friction_name);
+    fprintf('  < Friction model: _ _ _ _ _ _ _ _ _ _ %s \n',friction_name);
 
     fprintf('\n');
 
@@ -208,16 +195,16 @@ function R = morgen(network_id,scenario_id,model_id,solver_id,reductor_ids,varar
     config.steady.pc = inifield(ini,'steady_pc',45.988);
     config.steady.pn = inifield(ini,'steady_pn',101.325);
 
-    config.steady.compressibility_name = inifield(ini,'model_compressibility','ideal',{'ideal','dvgw','aga88','papay'});
-    config.steady.compressibility_ref = inifield(ini,'model_compref','steady',{'steady','normal'});
-    config.steady.compressibility_fun = str2func(['compressibility_',config.steady.compressibility_name]);
+    compressibility_name = inifield(ini,'model_compressibility','ideal',{'ideal','dvgw','aga88','papay'});
+    compressibility_ref = inifield(ini,'model_compref','steady',{'steady','normal'});
+    compressibility_fun = str2func(['compressibility_',compressibility_name]);
 
-    if isequal(config.steady.compressibility_ref,'normal')
+    if isequal(compressibility_ref,'normal')
 
-        config.steady.compressibility = @(p,T) config.steady.compressibility_fun(config.steady.pn,T,config.steady.pc,config.steady.Tc);
+        config.steady.compressibility = @(p,T) compressibility_fun(config.steady.pn,T,config.steady.pc,config.steady.Tc);
     else
 
-        config.steady.compressibility = @(p,T) config.steady.compressibility_fun(p,T,config.steady.pc,config.steady.Tc);
+        config.steady.compressibility = @(p,T) compressibility_fun(p,T,config.steady.pc,config.steady.Tc);
     end%if
 
     fprintf('Done.\n\n');
@@ -227,7 +214,7 @@ function R = morgen(network_id,scenario_id,model_id,solver_id,reductor_ids,varar
     fprintf('  < Critical temperature [C]: _ _ _ _ _ %g \n',kelvin2celsius(config.steady.Tc));
     fprintf('  < Critical pressure [bar]:_ _ _ _ _ _ %g \n',config.steady.pc);
     fprintf('  < Normal pressure [bar]:_ _ _ _ _ _ _ %g \n',config.steady.pn);
-    fprintf('  < Compressibility model:_ _ _ _ _ _ _ %s \n',config.steady.compressibility_name);
+    fprintf('  < Compressibility model:_ _ _ _ _ _ _ %s \n',compressibility_name);
 
     fprintf('\n');
 
@@ -243,7 +230,7 @@ function R = morgen(network_id,scenario_id,model_id,solver_id,reductor_ids,varar
 
     fprintf('Done.\n\n');
 
-    fprintf('  < Solver relaxation:_ _ _ _ _ _ _ _ _ %g \n', config.solver.relax);
+    fprintf('  < Solver relaxation:_ _ _ _ _ _ _ _ _ %.2f \n', config.solver.relax);
 
     fprintf('\n');
 
@@ -271,12 +258,9 @@ function R = morgen(network_id,scenario_id,model_id,solver_id,reductor_ids,varar
 
         fprintf('## Computing Reduced Order Models ... \n\n');
 
-        config.mor.rom_max = ceil(0.5*inifield(ini,'mor_max',100));
+        rom_max = varfield(varargin,'ord',inifield(ini,'mor_max',250));
 
-        if not(isempty(varargin)) && any(strncmp(varargin,'ord=',4))
-
-            config.mor.rom_max = ceil(0.5*sscanf(varargin{strncmp(varargin,'ord=',4)},'ord=%g'));
-        end%if
+        config.mor.rom_max = min([ceil(0.5 * rom_max),discrete.nP,discrete.nQ]);
 
         config.mor.excitation_name = inifield(ini,'mor_excitation','step',{'impulse','step','random-binary','white-noise'});
         config.mor.parametric = inifield(ini,'mor_parametric','yes',{'no','yes'});
@@ -300,7 +284,7 @@ function R = morgen(network_id,scenario_id,model_id,solver_id,reductor_ids,varar
         end%switch
 
         fprintf('  < Training excitation:_ _ _ _ _ _ _ _ %s \n',config.mor.excitation_name);
-        fprintf('  < Maximum reduced order:_ _ _ _ _ _ _ %u \n',2.0 * config.mor.rom_max);
+        fprintf('  < Maximum reduced order per variable: %u \n',config.mor.rom_max);
         fprintf('  < Parametric reduction? _ _ _ _ _ _ _ %s \n',config.mor.parametric);
 
         % Configuration only relevant for parametric model order reduction
@@ -409,6 +393,7 @@ function R = morgen(network_id,scenario_id,model_id,solver_id,reductor_ids,varar
         config.eval.Rs_min = inifield(ini,'Rs_min',500.0);
         config.eval.Rs_max = inifield(ini,'Rs_max',900.0);
 
+        rand('seed',1009);
         t0_samples = [config.eval.T0_min + abs(config.eval.T0_max - config.eval.T0_min) * rand(1,nSamples), scenario.T0]; ...
         rs_samples = [config.eval.Rs_min + abs(config.eval.Rs_max - config.eval.Rs_min) * rand(1,nSamples), scenario.Rs];
 
@@ -473,22 +458,22 @@ function R = morgen(network_id,scenario_id,model_id,solver_id,reductor_ids,varar
         fprintf('## Evaluating Reduced Order Models ... \n\n');
 
         config.eval.skip = max(round(inifield(ini,'eval_skip',2)),2);
-        config.eval.max = ceil(0.5 * min(inifield(ini,'eval_max',Inf)));
 
-        if not(isempty(varargin)) && any(strncmp(varargin,'ord=',4))
+        eval_max = varfield(varargin,'ord',inifield(ini,'eval_max',Inf));
 
-            config.eval.max = ceil(0.5 * sscanf(varargin{strncmp(varargin,'ord=',4)},'ord=%g'));
-        end%if
+        config.eval.max = min([floor(0.5*eval_max),config.mor.rom_max,discrete.nP,discrete.nQ]);
+
+        eff_order = 2 * config.eval.max;
 
         config.eval.pnorm = inifield(ini,'eval_pnorm',2,{1,2,Inf});
 
         fprintf('  < Test every n-th ROM:_ _ _ _ _ _ _ _ %u \n',config.eval.skip);
-        fprintf('  < Maximum reduced order:_ _ _ _ _ _ _ %u \n',2.0 * min([config.eval.max,config.mor.rom_max]));
+        fprintf('  < Maximum reduced order:_ _ _ _ _ _ _ %u \n',eff_order);
         fprintf('  < Parameter norm: _ _ _ _ _ _ _ _ _ _ %u \n',config.eval.pnorm);
 
         fprintf('\n');
 
-        redOrder = 1:config.eval.skip:min([config.eval.max,config.mor.rom_max,discrete.nP,discrete.nQ]);
+        redOrder = 1:config.eval.skip:config.eval.max;
         redOrders = numel(redOrder);
 
         online = cell(nReductors,1);
@@ -562,38 +547,43 @@ function R = morgen(network_id,scenario_id,model_id,solver_id,reductor_ids,varar
 %% VISUALIZE RESULTS
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-        effOrder = 2 * redOrder;
+        yscale = varfield(varargin,'ys',-16);
 
-        if not(isempty(varargin)) && any(strncmp(varargin,'ys=',3))
+        plot_id = varfield(varargin,'pid','');
+        base_name = [network_id,'--',scenario_id,'--',model_id,'--',solver_id];
+        if not(isempty(plot_id))
 
-            yscale = sscanf(varargin{strncmp(varargin,'ys=',3)},'ys=%g');
-        else
-
-            yscale = -16;
+            base_name = [base_name,'--',plot_id];
         end%if
 
-        plot_error(plot_path,[network_id,'--',scenario_id,'--',model_id,'--',solver_id],'L_0',effOrder,l0,labels,s0,compact,yscale);
-        plot_error(plot_path,[network_id,'--',scenario_id,'--',model_id,'--',solver_id],'L_1',effOrder,l1,labels,s1,compact,yscale);
-        plot_error(plot_path,[network_id,'--',scenario_id,'--',model_id,'--',solver_id],'L_8',effOrder,l8,labels,s8,compact,yscale);
-        plot_error(plot_path,[network_id,'--',scenario_id,'--',model_id,'--',solver_id],'L_2',effOrder,l2,labels,s2,compact,yscale);
+        plot_error(plot_path,base_name,'L_0',2*redOrder,l0,labels,s0,compact,yscale);
+        plot_error(plot_path,base_name,'L_1',2*redOrder,l1,labels,s1,compact,yscale);
+        plot_error(plot_path,base_name,'L_8',2*redOrder,l8,labels,s8,compact,yscale);
+        plot_error(plot_path,base_name,'L_2',2*redOrder,l2,labels,s2,compact,yscale);
 
-        fprintf('  > L2 MORscores (%s--%s--%s--%s):\n\n',network_id,scenario_id,model_id,solver_id);
+        close(figure());
+
+        fprintf('  > L2 MORscores (%s):\n\n',base_name);
         maxlen = max(cellfun(@numel,labels));
         cellfun(@(l,s) fprintf(['  %s:',repmat(' ',[1,maxlen-numel(l)]),' %.2f \n'],l,s),labels,s2);
-        save_ini([plot_path,'/',network_id,'--',scenario_id,'--',model_id,'--',solver_id,'_morscore_l2.ini'],labels,s2);
+        save_ini([plot_path,'/',base_name,'_morscore_l2.ini'],labels,s2);
         fprintf('\n');
 
         plot_offline(plot_path,[network_id,'--',model_id,'--',solver_id],offline,labels,compact);
-        plot_online(plot_path,[network_id,'--',scenario_id,'--',model_id,'--',solver_id],effOrder,online,labels,compact);
-        plot_breven(plot_path,[network_id,'--',scenario_id,'--',model_id,'--',solver_id],effOrder,breven,labels,compact);
+        plot_online(plot_path,base_name,2*redOrder,online,labels,compact);
+        plot_breven(plot_path,base_name,2*redOrder,breven,labels,compact);
 
-        R = struct('orders',redOrders, ...
+        R = struct('name',base_name, ...
+                   'orders',redOrder, ...
                    'l0error',l0, 'l0score',s0, ...
                    'l1error',l1, 'l1score',s1, ...
                    'l2error',l2, 'l2score',s2, ...
                    'l8error',l8, 'l8score',s8, ...
                    'online',online, 'breven',breven, ...
                    'method',labels);
+    else
+
+        R = [];
     end%if
 
     fprintf(' > Orderly exit:_ _ _ _ _ _ _ _ _ _ _ _ ');
