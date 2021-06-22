@@ -1,11 +1,11 @@
 %%% project: morgen - Model Order Reduction for Gas and Energy Networks
-%%% version: 0.99 (2021-04-12)
+%%% version: 1.0 (2021-06-22)
 %%% authors: C. Himpe (0000-0003-2194-6754), S. Grundel (0000-0002-0209-6566)
 %%% license: BSD-2-Clause (opensource.org/licenses/BSD-2-clause)
 %%% summary: GasLib134 benchmark network
 
 for s = {'imex1','imex2'}
-    for m = {{'ode_mid',''},{'ode_end',''},{'ode_end','_l'}} 
+    for m = {{'ode_mid',''},{'ode_end',''},{'ode_end','_l'}}
 
         if strcmp(m{1}{2},'_l'), plotid = 'lin'; else, plotid = 'non'; end%if
 %
@@ -39,7 +39,7 @@ for s = {'imex1','imex2'}
                                                 ['GasLib134--',m{1}{1},'--',s{:},'--ebg_wx',m{1}{2},'.rom'], ...
                                                 ['GasLib134--',m{1}{1},'--',s{:},'--ebg_wz',m{1}{2},'.rom'], ...
                                                 ['GasLib134--',m{1}{1},'--',s{:},'--dmd_r.rom'], ...
-                                               },'dt=30','ord=250','ys=-6',['pid=',plotid]);
+                                               },'dt=30','ord=250','ys=-5',['pid=',plotid]);
 %
     end%for
 end%for

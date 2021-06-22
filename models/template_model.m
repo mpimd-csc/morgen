@@ -1,6 +1,6 @@
 function discrete = template_model(network,config)
 %%% project: morgen - Model Order Reduction for Gas and Energy Networks
-%%% version: 0.99 (2021-04-12)
+%%% version: 1.0 (2021-06-22)
 %%% authors: C. Himpe (0000-0003-2194-6754), S. Grundel (0000-0002-0209-6566)
 %%% license: BSD-2-Clause (opensource.org/licenses/BSD-2-clause)
 %%% summary: Template model
@@ -23,8 +23,6 @@ function discrete = template_model(network,config)
     discrete.E = @(rtz) % returns a **sparse** nP+nQ x nP+nQ mass matrix given a scalar gas state (T0 * RS * z0)
 
     discrete.A = % nP+nQ x nP+nQ **sparse** system matrix
-
-    discrete.As = discrete.A % This is needed for efficient ROM computation, leave as is.
 
     discrete.B = % nP+nQ times nS+nD **sparse** input matrix
 

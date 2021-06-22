@@ -1,13 +1,13 @@
-function randscen(training,output)
+function randscen(network,scenario_name)
 %%% project: morgen - Model Order Reduction for Gas and Energy Networks
-%%% version: 0.99 (2021-04-12)
+%%% version: 1.0 (2021-06-22)
 %%% authors: C. Himpe (0000-0003-2194-6754), S. Grundel (0000-0002-0209-6566)
 %%% license: BSD-2-Clause (opensource.org/licenses/BSD-2-clause)
 %%% summary: Generate random scenario from training scenario
 
     %% Read Training Scenario
 
-    f = fopen(['../networks/',training,'/training.ini'],'r');
+    f = fopen(['../networks/',network,'/training.ini'],'r');
 
     co = textscan(f,'%s = %s','CommentStyle','#');
 
@@ -17,19 +17,19 @@ function randscen(training,output)
 
     %% Write Random Scenario
 
-    f = fopen([output,'.ini'],'w');
+    f = fopen([scenario_name,'.ini'],'w');
 
-    fprintf(f,'T0 = %g\n',str2num(ini.T0));
-    fprintf(f,'Rs = %g\n',str2num(ini.Rs));
+    fprintf(f,'T0 = %g\n',str2double(ini.T0));
+    fprintf(f,'Rs = %g\n',str2double(ini.Rs));
     fprintf(f,'tH = %g\n',86400.0);
 
     %% Compressor Pressures
 
     if isfield(ini,'cp')
-        compressor_pressure = cell2mat(cellfun(@(c) str2num(c),strsplit(ini.cp,'|'),'UniformOutput',false))';
+        compressor_pressure = cell2mat(cellfun(@(c) str2double(c),strsplit(ini.cp,'|'),'UniformOutput',false))';
 
         fprintf(f,'cp = ');
-        for l = 1:(numel(compressor_pressure) - 1);
+        for l = 1:(numel(compressor_pressure) - 1)
 
             fprintf(f,'%g|',compressor_pressure(l));
         end%for
@@ -39,7 +39,7 @@ function randscen(training,output)
 
     %% Supply Pressures
 
-    supply_pressure = cell2mat(cellfun(@(c) str2num(c),strsplit(ini.up,'|'),'UniformOutput',false))';
+    supply_pressure = cell2mat(cellfun(@(c) str2double(c),strsplit(ini.up,'|'),'UniformOutput',false))';
    
     fprintf(f,'up = ');
     for k = 1:24
@@ -61,7 +61,7 @@ function randscen(training,output)
 
     %% Demand Mass-Fluxes
 
-    demand_massflux = cell2mat(cellfun(@(c) str2num(c),strsplit(ini.uq,'|'),'UniformOutput',false))';
+    demand_massflux = cell2mat(cellfun(@(c) str2double(c),strsplit(ini.uq,'|'),'UniformOutput',false))';
 
     rand_demand = [demand_massflux; demand_massflux .* (0.75 + 0.5*rand(23,numel(demand_massflux)))];
 

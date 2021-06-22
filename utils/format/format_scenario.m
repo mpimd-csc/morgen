@@ -1,6 +1,6 @@
 function scenario = format_scenario(scenario_path,network)
 %%% project: morgen - Model Order Reduction for Gas and Energy Networks
-%%% version: 0.99 (2021-04-12)
+%%% version: 1.0 (2021-06-22)
 %%% authors: C. Himpe (0000-0003-2194-6754), S. Grundel (0000-0002-0209-6566)
 %%% license: BSD-2-Clause (opensource.org/licenses/BSD-2-clause)
 %%% summary: Read scenario ini file and return a structure.
@@ -9,13 +9,15 @@ function scenario = format_scenario(scenario_path,network)
 
     scenario.T0 = celsius2kelvin(str2double(ini.T0));				 % ambient temperature
     scenario.Rs = str2double(ini.Rs);						 % specific gas constant
-    scenario.Tf = str2double(ini.tH);						 % time horizon
+    scenario.tH = str2double(ini.tH);						 % time horizon
 
     supply_pressure = cell2mat(cellfun(@(c) str2num(c),strsplit(ini.up,'|'),'UniformOutput',false));
-    assert(size(supply_pressure,1) == network.nSupply,'network/scenario supply mismatch');
+    assert(size(supply_pressure,1) == network.nSupply,['network/scenario supply mismatch: found ',num2str(size(supply_pressure,1)), ...
+                                                                                        ', need ',num2str(network.nSupply)]);
 
     demand_massflux = cell2mat(cellfun(@(c) str2num(c),strsplit(ini.uq,'|'),'UniformOutput',false));
-    assert(size(demand_massflux,1) == network.nDemand,'network/scenario demand mismatch');
+    assert(size(demand_massflux,1) == network.nDemand,['network/scenario demand mismatch: found ',num2str(size(demand_massflux,1)), ...
+                                                                                        ', need ',num2str(network.nDemand)]);
 
     time_index = str2double(strsplit(ini.ut,'|'));
     assert(numel(time_index) == size(supply_pressure,2),'scenario time/supply mismatch');
@@ -31,12 +33,13 @@ function scenario = format_scenario(scenario_path,network)
     % Decode compressors
     if isfield(ini,'cp')
 
-        scenario.cp = str2num(ini.cp);
-        assert(numel(scenario.cp) == network.nCompressor,'network/scenario demand mismatch');
+        scenario.cp = cell2mat(cellfun(@(c) str2num(c),strsplit(ini.cp,'|'),'UniformOutput',false));
+        assert(numel(scenario.cp) == network.nCompressor,['network/scenario compressor mismatch: found ',num2str(numel(scenario.cp)), ...
+                                                                                               ', need ',num2str(network.nCompressor)]);
     else
 
         scenario.cp = 0;
-        assert(0 == network.nCompressor,'network/scenario demand mismatch');
+        assert(0 == network.nCompressor,['network/scenario compressor mismatch: found 0, need ',num2str(network.nCompressor)]);
     end%if
 end
 

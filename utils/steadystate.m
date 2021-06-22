@@ -1,12 +1,13 @@
 function steady = steadystate(discrete,scenario,config)
 %%% project: morgen - Model Order Reduction for Gas and Energy Networks
-%%% version: 0.99 (2021-04-12)
+%%% version: 1.0 (2021-06-22)
 %%% authors: C. Himpe (0000-0003-2194-6754), S. Grundel (0000-0002-0209-6566)
 %%% license: BSD-2-Clause (opensource.org/licenses/BSD-2-clause)
 %%% summary: Caching steady-state computation.
 
     persistent T0;
     persistent Rs;
+    persistent isdual;
     persistent xs;
     persistent ys;
     persistent z0;
@@ -15,32 +16,38 @@ function steady = steadystate(discrete,scenario,config)
     persistent iter2;
 
     % Caching: Reusable steady state
-    if isempty(T0) || isempty(Rs) || not((T0 == scenario.T0) && (Rs == scenario.Rs))
+    if isempty(T0) || isempty(Rs) || ...
+       not((T0 == scenario.T0) && (Rs == scenario.Rs)) || ...
+       not(isdual == isfield(discrete,'dual'))
 
         clear leastnorm;
 
-        x0 = discrete.x0;
         T0 = scenario.T0;
         Rs = scenario.Rs;
+
+        isdual = isfield(discrete,'dual');
+
+        x0 = discrete.x0;
         rt = T0 * Rs;
 
         % Right-hand side
         b = -(discrete.B * scenario.us + discrete.F * scenario.cp);
         f = @(x,z) discrete.f(x0,x,scenario.us,rt * z);
 
-%
 %  /  0  Apq \ / ps \   /   -bpd    \
 %  |         | |    | = |           |
 %  \ Aqp  0  / \ qs /   \ -bqs - fq /
 %
 %       A        xs           b
-%
+
+        iP = 1:discrete.nP;
+        iQ = discrete.nP+1:discrete.nP+discrete.nQ;
 
         % Component extraction
-        Apq = discrete.A(1:discrete.nP,discrete.nP+1:end);
-        Aqp = discrete.A(discrete.nP+1:end,1:discrete.nP);
-        bpd = b(1:discrete.nP);
-        bqs = b(discrete.nP+1:end);
+        Apq = discrete.A(iP,iQ);
+        Aqp = discrete.A(iQ,iP);
+        bpd = b(iP);
+        bqs = b(iQ);
 
         qs = leastnorm(bpd,Apq); % Only computed once, hence first
         ps = leastnorm(bqs,Aqp); % Repeatedly computed, hence second to exploit caching
@@ -56,7 +63,7 @@ function steady = steadystate(discrete,scenario,config)
         % Simple iterative steady-state refinement
         while (err > config.maxerror) && (iter1 < config.maxiter)
 
-            ps = leastnorm(bqs - fs(discrete.nP+1:end));
+            ps = leastnorm(bqs - fs(iQ));
 
             z0 = mean(config.compressibility(ps,scenario.T0));
 
@@ -74,7 +81,6 @@ function steady = steadystate(discrete,scenario,config)
         % IMEX-1 steady-state approximation
         if (err > config.maxerror)
 
-            warning('off','Octave:lu:sparse_input');
             [AL,AU,AP] = lu(discrete.E(rt*z0) - config.dt * discrete.A,'vector');
 
             while (err > config.maxerror) && (iter2 < config.maxiter)

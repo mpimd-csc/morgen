@@ -1,6 +1,6 @@
 function refined_network = format_network(network_path,config)
 %%% project: morgen - Model Order Reduction for Gas and Energy Networks
-%%% version: 0.99 (2021-04-12)
+%%% version: 1.0 (2021-06-22)
 %%% authors: C. Himpe (0000-0003-2194-6754), S. Grundel (0000-0002-0209-6566)
 %%% license: BSD-2-Clause (opensource.org/licenses/BSD-2-clause)
 %%% summary: Read net file and return a network structure.
@@ -52,16 +52,18 @@ function refined_network = format_network(network_path,config)
 
 %% Refine network
 
-    nom_len = 2.0 * config.dt * config.vmax;
+    % Enforce CFL condition
+    nom_len = (config.dt * config.vmax) / config.cfl;
 
     [refined_idlist,refined_edgelist,refined_network] = refine(idlist,edgelist,network,nom_len);
 
-    refined_network.node_op(supply_nodes,:) = [];
-    refined_network.node_op(:,supply_nodes) = [];
+    % Remove supply nodes from node unrefiner
+    refined_network.unrefine_nodes(supply_nodes,:) = [];
+    refined_network.unrefine_nodes(:,supply_nodes) = [];
 
-    % Sparse diagonal is used here, since Octave cannot handle sparse matrices and broadcasting
-    refined_network.node_op = refined_network.node_op * spdiags(1.0./full(vecnorm(refined_network.node_op,2,1))',0,size(refined_network.node_op,2),size(refined_network.node_op,2));
-    refined_network.edge_op = refined_network.edge_op * spdiags(1.0./full(vecnorm(refined_network.edge_op,2,1))',0,size(refined_network.edge_op,2),size(refined_network.edge_op,2));
+    % Average contribution of refined edges
+    nunref = size(refined_network.unrefine_edges,1);
+    refined_network.unrefine_edges = spdiags(1.0./sum(refined_network.unrefine_edges,2),0,nunref,nunref) * refined_network.unrefine_edges;
 
 %% Quantify network
 
@@ -107,23 +109,23 @@ end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [refined_idlist,refined_edgelist,refined_network] = refine(idlist,edgelist,network,nom_len)
+function [refined_ids,refined_edges,refined_network] = refine(ids,edges,network,nom_len)
 %%% summary: Refine too-long pipes in network
 
-    nEdges = numel(idlist);
-    nNodes = max(edgelist(:));
+    nEdges = numel(ids);
+    nNodes = max(edges(:));
 
     extra = floor(network.length ./ nom_len);
 
     eff_extra = sum(extra(not(isnan(extra))));
 
-    total = numel(idlist) + eff_extra;
+    total = numel(ids) + eff_extra;
 
-    mean_diam = mean(network.diameter(find(idlist == 'P')));
+    mean_diam = mean(network.diameter(find(ids == 'P')));
 
     % pre-allocate
-    refined_id = zeros(total,1);
-    refined_edgelist = zeros(total,2);
+    refined_ids = zeros(total,1);
+    refined_edges = zeros(total,2);
 
     refined_network = struct();
 
@@ -134,24 +136,24 @@ function [refined_idlist,refined_edgelist,refined_network] = refine(idlist,edgel
     refined_network.diameter = zeros(total,1);
     refined_network.roughness = zeros(total,1);
 
-    refined_network.edge_op = [speye(nEdges); sparse(eff_extra,nEdges)];
-    refined_network.node_op = [speye(nNodes); sparse(eff_extra,nNodes)];
+    refined_network.unrefine_nodes = [speye(nNodes); sparse(eff_extra,nNodes)];
+    refined_network.unrefine_edges = [speye(nEdges); sparse(eff_extra,nEdges)];
 
-    next_edge = size(edgelist,1) + 1;
-    next_node = max(edgelist(:)) + 1;
+    next_edge = size(edges,1) + 1;
+    next_node = max(edges(:)) + 1;
 
-    for k = 1:numel(idlist)
+    for k = 1:numel(ids)
 
         %% Handle too long pipes
-        if (idlist(k) == 'P') && (extra(k) > 0)
+        if (ids(k) == 'P') && (extra(k) > 0)
 
             new_edges = next_edge:(next_edge + extra(k) - 1);
             new_nodes = next_node:(next_node + extra(k) - 1);
 
-            refined_edgelist([k,new_edges],:) = [[edgelist(k,1);new_nodes'], ... % from
-                                                 [new_nodes';edgelist(k,2)]];    % to
+            refined_edges([k,new_edges],:) = [[edges(k,1);new_nodes'], ... % from
+                                              [new_nodes';edges(k,2)]];    % to
 
-            refined_idlist([k,new_edges]) = 'P';
+            refined_ids([k,new_edges]) = 'P';
 
             refined_network.length([k,new_edges]) = [repmat(nom_len,[extra(k),1]); ...
                                                      rem(network.length(k),nom_len)];
@@ -162,14 +164,13 @@ function [refined_idlist,refined_edgelist,refined_network] = refine(idlist,edgel
             next_edge = new_edges(end) + 1;
             next_node = new_nodes(end) + 1;
 
-            refined_network.edge_op(new_edges,k) = 1.0;
-            refined_network.node_op(new_nodes,edgelist(k,2)) = 1.0;
+            refined_network.unrefine_edges(k,new_edges) = 1.0;
 
         %% Handle non-pipes
-        elseif not(idlist(k) == 'P')
+        elseif not(ids(k) == 'P')
 
-            refined_idlist(k) = idlist(k);
-            refined_edgelist(k,:) = edgelist(k,:);
+            refined_ids(k) = ids(k);
+            refined_edges(k,:) = edges(k,:);
 
             refined_network.length(k) = nom_len;
             refined_network.incline(k) = 0;
@@ -180,8 +181,8 @@ function [refined_idlist,refined_edgelist,refined_network] = refine(idlist,edgel
         else
 
             % copy unrefined network
-            refined_idlist(k) = idlist(k);
-            refined_edgelist(k,:) = edgelist(k,:);  
+            refined_ids(k) = ids(k);
+            refined_edges(k,:) = edges(k,:);  
 
             refined_network.length(k) = network.length(k);
             refined_network.incline(k) = network.incline(k);

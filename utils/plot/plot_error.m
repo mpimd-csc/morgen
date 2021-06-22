@@ -1,6 +1,6 @@
 function plot_error(plot_path,name,id,orders,data,labels,scores,compact,yscale)
 %%% project: morgen - Model Order Reduction for Gas and Energy Networks
-%%% version: 0.99 (2021-04-12)
+%%% version: 1.0 (2021-06-22)
 %%% authors: C. Himpe (0000-0003-2194-6754), S. Grundel (0000-0002-0209-6566)
 %%% license: BSD-2-Clause (opensource.org/licenses/BSD-2-clause)
 %%% summary: plot comparable data as lines.
@@ -13,7 +13,7 @@ function plot_error(plot_path,name,id,orders,data,labels,scores,compact,yscale)
         subplot(2,6,[5,6,11,12]);
     else
 
-        figure('Name',[id,' [',name,'] Relative ',id,' Output Model Reduction Error'],'NumberTitle','off');
+        fig = figure('Name',[id,' [',name,'] Relative ',id,' Output Model Reduction Error'],'NumberTitle','off');
         pbaspect([3,2,1]);
     end%if
 
@@ -25,12 +25,13 @@ function plot_error(plot_path,name,id,orders,data,labels,scores,compact,yscale)
         semilogy(orders(:),data{k}(:),'Color',colors(k,:),'LineWidth',4);
     end%for
 
-    ylabel(['Relative ',id,' Output Error']);
-
     hold off;
     xlim([min(orders),max(orders)]);
     ylim([10^yscale,1]);
-    xlabel('Reduced Dimension');
+
+% Deactivated since wasting too much space
+%    xlabel('Reduced Dimension');
+%    ylabel(['Relative ',id,' Output Error']);
 
     if compact
 
@@ -40,7 +41,7 @@ function plot_error(plot_path,name,id,orders,data,labels,scores,compact,yscale)
 
         set([gca; findall(gca,'Type','text')],'FontSize',16);
 
-        print('-depsc',[plot_path,'/',name,'_',id,'error.eps']);
+        print(fig,'-depsc',[plot_path,'/',name,'_',id,'error.eps']);
 
         if not(exist('OCTAVE_VERSION','builtin'))
 

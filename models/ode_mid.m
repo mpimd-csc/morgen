@@ -1,6 +1,6 @@
 function discrete = ode_mid(network,config)
 %%% project: morgen - Model Order Reduction for Gas and Energy Networks
-%%% version: 0.99 (2021-04-12)
+%%% version: 1.0 (2021-06-22)
 %%% authors: C. Himpe (0000-0003-2194-6754), S. Grundel (0000-0002-0209-6566)
 %%% license: BSD-2-Clause (opensource.org/licenses/BSD-2-clause)
 %%% summary: Nonlinear implicit ODE midpoint model.
@@ -10,14 +10,11 @@ function discrete = ode_mid(network,config)
     discrete.nP = size(network.A0,1);						% number of pressure states
     discrete.nQ = size(network.A0,2);						% number of mass-flux states
     discrete.nPorts = network.nSupply + network.nDemand; 			% number of ports
-
-    discrete.refine = blkdiag(network.node_op,network.edge_op);
-    discrete.np = size(network.node_op,2);
-    discrete.nq = size(network.edge_op,2);
+    discrete.unrefine = blkdiag(network.unrefine_nodes,network.unrefine_edges);
 
 %% Helper Variables
 
-    F_k = network.length ./ network.nomLen;					% actual-nominal length fraction
+    F_k = config.tuning * (network.length ./ network.nomLen);			% actual-nominal length fraction scaled by tuning factor
 
     absA0  = abs(network.A0);
     absA0T = abs(network.A0)';
@@ -59,8 +56,6 @@ function discrete = ode_mid(network,config)
     discrete.A = [sparse(discrete.nP, discrete.nP), -1e-5 * network.A0; ...
                   1e5 * (network.A0 - network.Ac)', sparse(discrete.nQ, discrete.nQ)];
 
-    discrete.As = discrete.A;
-
 % Input matrix
 %
 %     /   0     B_d \
@@ -97,7 +92,7 @@ function discrete = ode_mid(network,config)
     f_local = @(p,q) [zeros(discrete.nP, 1); ...
                           -( d_g .* p + (d_q * d_f) .* F_k .* ((q .* abs(q)) ./ p))];
 
-    discrete.f = @(xs,x,u,rtz) f_local(p2q(xs(iP) + x(iP),u(iS))./rtz,xs(iQ) + x(iQ));
+    discrete.f = @(xs,x,u,rtz) discrete.A * xs + f_local(p2q(xs(iP) + x(iP),u(iS))./rtz,xs(iQ) + x(iQ));
 
 % Local Jacobian
 %

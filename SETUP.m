@@ -1,5 +1,5 @@
 %%% project: morgen - Model Order Reduction for Gas and Energy Networks
-%%% version: 0.99 (2021-04-12)
+%%% version: 1.0 (2021-06-22)
 %%% authors: C. Himpe (0000-0003-2194-6754), S. Grundel (0000-0002-0209-6566)
 %%% license: BSD-2-Clause (opensource.org/licenses/BSD-2-clause)
 %%% summary: Basic setup script.
@@ -10,7 +10,8 @@ fprintf('============================================================\n');
 fprintf('\n');
 fprintf('## Cite as:\n\n');
 fprintf('  C. Himpe, S. Grundel, P. Benner: \n');
-fprintf('  "Model Order Reduction for Gas and Energy Networks"; 2021. \n\n');
+fprintf('  "Model Order Reduction for Gas and Energy Networks"; \n');
+fprintf('  arXiv (math.OC): 2011.12099, 2021. \n\n');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% ADD FOLDERS

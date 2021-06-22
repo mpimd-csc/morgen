@@ -1,25 +1,31 @@
 function R = morgen(network_id,scenario_id,model_id,solver_id,reductor_ids,varargin)
 %%% project: morgen - Model Order Reduction for Gas and Energy Networks
-%%% version: 0.99 (2021-04-12)
+%%% version: 1.0 (2021-06-22)
 %%% authors: C. Himpe (0000-0003-2194-6754), S. Grundel (0000-0002-0209-6566)
 %%% license: BSD-2-Clause (opensource.org/licenses/BSD-2-clause)
 %%% summary: Model reduction test platform and task master.
+%
+% For help on morgen please see the <README.md> file.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% INIT MORGEN
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     % Version constant
-    MORGEN_VERSION = 0.99;
+    MORGEN_VERSION = 1.0;
+
+    % Random number seeding
+    SEED = 1009;
+    rand('seed',SEED);
+    randn('seed',SEED);
+
+    % Add util path (recursively)
+    addpath(genpath('utils'));
 
     % Print welcome message
-    fprintf('\n');
-    fprintf('# morgen - Model Order Reduction for Gas and Energy Networks\n');
-    fprintf('============================================================\n');
-    fprintf('\n');
+    logger('head','morgen - Model Order Reduction for Gas and Energy Networks');
 
-    % Add paths
-    addpath(genpath('utils'));
+    % Add module paths
     addpath('models');
     addpath('solvers');
     addpath('reductors');
@@ -28,51 +34,50 @@ function R = morgen(network_id,scenario_id,model_id,solver_id,reductor_ids,varar
     ocu = onCleanup(@cleanup);
 
     % Report version
-    fprintf(' * Version: _ _ _ _ _ _ _ _ _ _ _ _ _ _ %.2f \n',MORGEN_VERSION);
+    logger('output','Version',MORGEN_VERSION,'%.2f');
 
-    % Report environment
+    % Report environment and turn off specific warnings (restored by cleanup)
     if not(exist('OCTAVE_VERSION','builtin'))
 
-        vec = @(m) m(:);
-        fprintf(' * Environment: _ _ _ _ _ _ _ _ _ _ _ _ MATLAB \n');
+        vec = @(m) m(:); % MATLAB does not have this functional definition of : (colon) operator
+        warning('off','MATLAB:nearlySingularMatrix'); % Turn off warning potentially bloating the log
+        logger('output','Environment','MATLAB','%s');
     else
 
         % Octave has "vec" built-in
-        fprintf(' * Environment: _ _ _ _ _ _ _ _ _ _ _ _ OCTAVE \n');
+        warning('off','Octave:nearly-singular-matrix'); % Turn off warning potentially bloating the log
+        warning('off','Octave:lu:sparse_input'); % Octave warns by default about sparse matrices in LU decompositions
+        warning('off','Octave:negative-data-log-axis'); % Octave warns by default about negative data in log plots
+        logger('output','Environment','OCTAVE','%s');
     end%if
 
-    fprintf('\n');
+    logger('next');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% SETUP ARGUMENTS
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    fprintf('## Selected Ensemble:\n\n');
+    logger('head','Parsing Ensemble: ...');
 
     % Check if "network_id" argument leads to a network file
     assert(isfile(['networks/',network_id,'.net']), ...
            ['morgen: unknown network: ',network_id]);
     network_path = ['networks/',network_id,'.net'];
-    fprintf('  * Network:_ _ _ _ _ _ _ _ _ _ _ _ _ _ %s \n',network_id);
 
     % Check if "scenario_id" argument leads to a scenario file
     assert(isfile(['networks/',network_id,'/',scenario_id,'.ini']), ...
            ['morgen: unknown scenario: ',scenario_id]);
     scenario_path = ['networks/',network_id,'/',scenario_id,'.ini'];
-    fprintf('  * Scenario: _ _ _ _ _ _ _ _ _ _ _ _ _ %s \n',scenario_id);
 
     % Check if "model_id" argument refers to a supported model
     assert(any(strcmpi({vec(dir('models/')).name}, ...
-           [model_id,'.m'])),['morgen: unknown model: ',model_id]);
-    %model_list = 
-    model = str2func(model_id);
-    fprintf('  * Discretization: _ _ _ _ _ _ _ _ _ _ %s \n',model_id);
+           [model_id,'.m'])),['morgen: unknown model: ',model_id]); 
+    model_fun = str2func(model_id);
 
     % Check if "solver_id" argument refers to a supported solver
     assert(any(strcmpi({vec(dir('solvers/')).name}, ...
            [solver_id,'.m'])),['morgen: unknown solver: ',solver_id]);
-    solver = str2func(solver_id);
-    fprintf('  * Time Stepper: _ _ _ _ _ _ _ _ _ _ _ %s \n',solver_id);
+    solver_fun = str2func(solver_id);
 
     % Check if "reductor_ids" argument refers to a list of supported reductors
     if exist('reductor_ids','var') && not(isempty(reductor_ids))
@@ -84,18 +89,32 @@ function R = morgen(network_id,scenario_id,model_id,solver_id,reductor_ids,varar
         reductor = cell(numel(reductor_ids),1);
         reductor(reductor_func_mask) = cellfun(@(c) str2func(c),reductor_ids(reductor_func_mask),'UniformOutput',false);
         reductor(reductor_file_mask) = reductor_ids(reductor_file_mask);
-        fprintf('  * Reductor(s):_ _ _ _ _ _ _ _ _ _ _ _ ');
-        cellfun(@(c) fprintf('%s \n                                        ',c),reductor_ids,'UniformOutput',false);
-        if numel(reductor_ids) == 0, fprintf('\n'); end%if
     end%if
 
-    fprintf('\n');
+    logger('done');
+
+    logger('input','Network',network_id,'%s');
+    logger('input','Scenario',scenario_id,'%s');
+    logger('input','Discretization',model_id,'%s');
+    logger('input','Time Stepper',solver_id,'%s');
+
+    logger('line');
+
+    if exist('reductor_ids','var') && not(isempty(reductor_ids))
+
+        for k = reductor_ids
+
+            logger('input','Reductor',k{:},'%s');
+        end%for
+    end%if
+
+    logger('next');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% SETUP CONFIGURATION
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    fprintf('## Reading Configuration ... ');
+    logger('head','Reading Configuration ...');
 
     % Read configuration file
     try
@@ -116,77 +135,79 @@ function R = morgen(network_id,scenario_id,model_id,solver_id,reductor_ids,varar
     rom_path = inifield(ini,'morgen_roms','z_roms');
     if not(exist(rom_path, 'dir')), mkdir(rom_path); end%if
 
-    fprintf('Done.\n\n');
+    logger('done');
 
-    fprintf('  < Configuration:_ _ _ _ _ _ _ _ _ _ _ %s \n',ini_path)
+    logger('input','Configuration',ini_path,'%s');
 
-    fprintf('\n');
+    logger('line');
 
-    fprintf('  > Plot path:_ _ _ _ _ _ _ _ _ _ _ _ _ %s \n',plot_path);
-    fprintf('  > ROM path: _ _ _ _ _ _ _ _ _ _ _ _ _ %s \n',rom_path);
+    logger('output','Plot path',plot_path,'%s');
+    logger('output','ROM path',rom_path,'%s');
 
-    fprintf('\n');
+    logger('next');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% SETUP NETWORK GRAPH
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    fprintf('## Loading Topology ... ');
+    logger('head','Loading Topology ...');
 
     config.network.dt = varfield(varargin,'dt',inifield(ini,'network_dt',180));
     config.network.vmax = inifield(ini,'network_vmax',20);
+    config.network.cfl = inifield(ini,'network_cfl',0.5);
 
     network = format_network(network_path,config.network);
 
-    fprintf('Done.\n\n');
+    logger('done');
 
-    fprintf('  < Time step [s]:_ _ _ _ _ _ _ _ _ _ _ %g \n',config.network.dt);
-    fprintf('  < Maximum gas velocity [m/s]: _ _ _ _ %g \n',config.network.vmax);
+    logger('input','Time step [s]',config.network.dt,'%g');
+    logger('input','Maximum gas velocity [m/s]',config.network.vmax,'%g');
+    logger('input','Enforced CFL constant',config.network.cfl,'%.2g');
 
-    fprintf('\n');
+    logger('line');
 
-    fprintf('  > Homogenized pipe length [m]:_ _ _ _ %g \n',network.nomLen);
-    fprintf('  > Associated CFL constant:_ _ _ _ _ _ %.2g \n',cfl(network.nomLen,config.network.dt,config.network.vmax));
-    fprintf('  > Number of refined edges:_ _ _ _ _ _ %u \n',network.nEdges);
-    fprintf('  > Number of refined internal nodes: _ %u \n',network.nInternal);
-    fprintf('  > Number of supply nodes: _ _ _ _ _ _ %u \n',network.nSupply);
-    fprintf('  > Number of demand nodes: _ _ _ _ _ _ %u \n',network.nDemand);
-    fprintf('  > Number of compressor edges: _ _ _ _ %u \n',network.nCompressor);
+    logger('output','Homogenized pipe length [m]',network.nomLen,'%g');
+    logger('output','Number of refined edges',network.nEdges,'%u');
+    logger('output','Number of refined internal nodes',network.nInternal,'%u');
+    logger('output','Number of supply nodes',network.nSupply,'%u');
+    logger('output','Number of demand nodes',network.nDemand,'%u');
+    logger('output','Number of compressor edges',network.nCompressor,'%u');
 
-    fprintf('\n');
+    logger('next');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% SETUP DISCRETE MODEL
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    fprintf('## Initializing Model ... ');
+    logger('head','Initializing Model ...');
 
+    config.model.tuning = varfield(varargin,'tf',inifield(ini,'model_tuning',1.0));
     config.model.reynolds = inifield(ini,'model_reynolds',1e6);
     friction_name = inifield(ini,'model_friction','hofer',{'hofer','nikuradse','altshul','schifrinson','pmt1025','igt'});
     friction_fun = str2func(['friction_',friction_name]);
     config.model.friction = @(D,k) friction_fun(config.model.reynolds,D,k);
 
-    discrete = model(network,config.model);
+    discrete = model_fun(network,config.model);
 
-    fprintf('Done.\n\n');
+    logger('done');
 
-    fprintf('  < Approx. Reynolds number [1]:_ _ _ _ %u \n',config.model.reynolds);
-    fprintf('  < Friction model: _ _ _ _ _ _ _ _ _ _ %s \n',friction_name);
+    logger('input','Approx. Reynolds number [1]',config.model.reynolds,'%u');
+    logger('input','Friction model',friction_name,'%s');
 
-    fprintf('\n');
+    logger('line');
 
-    fprintf('  > Number of total states: _ _ _ _ _ _ %u \n',discrete.nP + discrete.nQ);
-    fprintf('  > Number of pressure states:_ _ _ _ _ %u \n',discrete.nP);
-    fprintf('  > Number of mass-flux states: _ _ _ _ %u \n',discrete.nQ);
-    fprintf('  > Number of boundary ports: _ _ _ _ _ %u \n',discrete.nPorts);
+    logger('output','Number of total states',discrete.nP + discrete.nQ,'%u');
+    logger('output','Number of pressure states',discrete.nP,'%u');
+    logger('output','Number of mass-flux states',discrete.nQ,'%u');
+    logger('output','Number of boundary ports',discrete.nPorts,'%u');
 
-    fprintf('\n');
+    logger('next');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% SETUP STEADY-STATE
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    fprintf('## Initializing Steady-State ... ');
+    logger('head','Initializing Steady-State ...');
 
     config.steady.dt = config.network.dt;
     config.steady.maxiter = max(1,round(inifield(ini,'steady_maxiter',1)));
@@ -207,48 +228,49 @@ function R = morgen(network_id,scenario_id,model_id,solver_id,reductor_ids,varar
         config.steady.compressibility = @(p,T) compressibility_fun(p,T,config.steady.pc,config.steady.Tc);
     end%if
 
-    fprintf('Done.\n\n');
+    logger('done');
 
-    fprintf('  < Maximum steady state error: _ _ _ _ %g \n',config.steady.maxerror);
-    fprintf('  < Maximum steady state iterations:_ _ %u \n',config.steady.maxiter);
-    fprintf('  < Critical temperature [C]: _ _ _ _ _ %g \n',kelvin2celsius(config.steady.Tc));
-    fprintf('  < Critical pressure [bar]:_ _ _ _ _ _ %g \n',config.steady.pc);
-    fprintf('  < Normal pressure [bar]:_ _ _ _ _ _ _ %g \n',config.steady.pn);
-    fprintf('  < Compressibility model:_ _ _ _ _ _ _ %s \n',compressibility_name);
+    logger('input','Maximum steady state error',config.steady.maxerror,'%g');
+    logger('input','Maximum steady state iterations',config.steady.maxiter,'%u');
+    logger('input','Critical temperature [C]',kelvin2celsius(config.steady.Tc),'%g');
+    logger('input','Critical pressure [bar]',config.steady.pc,'%g');
+    logger('input','Normal pressure [bar]',config.steady.pn,'%g');
+    logger('input','Compressibility model',compressibility_name,'%s');
 
-    fprintf('\n');
+    logger('next');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% SETUP SOLVER
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    fprintf('## Initializing Solver ... ');
+    logger('head','Initializing Solver ...');
 
     config.solver.dt = config.network.dt;
     config.solver.relax = min(1.0,max(0,inifield(ini,'solver_relax',1)));
-    config.solver.steadystate = @(s) steadystate(discrete,s,config.steady);
 
-    fprintf('Done.\n\n');
+    solver = @(d,s,c) solver_fun(d,s,setfield(c,'steady',steadystate(discrete,s,config.steady)));
 
-    fprintf('  < Solver relaxation:_ _ _ _ _ _ _ _ _ %.2f \n', config.solver.relax);
+    logger('done');
 
-    fprintf('\n');
+    logger('input','Solver relaxation',config.solver.relax,'%.2f');
+
+    logger('next');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% SETUP SCENARIO
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    fprintf('## Loading Scenario ... ');
+    logger('head','Loading Scenario ...');
 
     scenario = format_scenario(scenario_path,network);
 
-    fprintf('Done.\n\n');
+    logger('done');
 
-    fprintf('  > Ambient temperature [C]:_ _ _ _ _ _ %.2g \n',kelvin2celsius(scenario.T0));
-    fprintf('  > Specific gas constant [J/(kg K)]: _ %g \n',scenario.Rs);
-    fprintf('  > Time horizon [s]: _ _ _ _ _ _ _ _ _ %g \n',scenario.Tf);
+    logger('output','Ambient temperature [C]',kelvin2celsius(scenario.T0),'%.2g');
+    logger('output','Specific gas constant [J/(kg K)]',scenario.Rs,'%g');
+    logger('output','Time horizon [s]',scenario.tH,'%g');
 
-    fprintf('\n');
+    logger('next');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% MODEL REDUCTION OFFLINE PHASE
@@ -256,17 +278,19 @@ function R = morgen(network_id,scenario_id,model_id,solver_id,reductor_ids,varar
 
     if exist('reductor_ids','var') && not(isempty(reductor_ids))
 
-        fprintf('## Computing Reduced Order Models ... \n\n');
+        logger('head','Computing Reduced Order Models ...');
 
         rom_max = varfield(varargin,'ord',inifield(ini,'mor_max',250));
 
         config.mor.rom_max = min([ceil(0.5 * rom_max),discrete.nP,discrete.nQ]);
 
-        config.mor.excitation_name = inifield(ini,'mor_excitation','step',{'impulse','step','random-binary','white-noise'});
-        config.mor.parametric = inifield(ini,'mor_parametric','yes',{'no','yes'});
+        config.mor.parametric = inifield(ini,'mor_parametric','true',{'false','true'});
         config.mor.solver = config.solver;
 
-        switch config.mor.excitation_name
+        excitation_name = inifield(ini,'mor_excitation','step',{'impulse','step','random-binary','white-noise'});
+
+        % Set training input
+        switch excitation_name
 
             case 'step'
                 config.mor.excitation = @training_step;
@@ -275,20 +299,20 @@ function R = morgen(network_id,scenario_id,model_id,solver_id,reductor_ids,varar
                 config.mor.excitation = @(t) training_impulse(t,config.network.dt);
 
             case 'random-binary'
-                rand('seed',1009);
                 config.mor.excitation = @training_randombinary;
 
             case 'white-noise'
-                randn('seed',1009);
                 config.mor.excitation = @training_whitenoise;
         end%switch
 
-        fprintf('  < Training excitation:_ _ _ _ _ _ _ _ %s \n',config.mor.excitation_name);
-        fprintf('  < Maximum reduced order per variable: %u \n',config.mor.rom_max);
-        fprintf('  < Parametric reduction? _ _ _ _ _ _ _ %s \n',config.mor.parametric);
+        logger('input','Training excitation',excitation_name,'%s');
+        logger('input','Max reduced order per variable',config.mor.rom_max,'%u');
+        logger('input','Parametric reduction?',config.mor.parametric,'%s');
+
+        logger('line');
 
         % Configuration only relevant for parametric model order reduction
-        if isequal(config.mor.parametric,'yes')
+        if strcmp(config.mor.parametric,'true')
 
             config.mor.T0_min = celsius2kelvin(inifield(ini,'T0_min', 0.0));
             config.mor.T0_max = celsius2kelvin(inifield(ini,'T0_max',25.0));
@@ -296,9 +320,9 @@ function R = morgen(network_id,scenario_id,model_id,solver_id,reductor_ids,varar
             config.mor.Rs_max = inifield(ini,'Rs_max',900.0);
             config.mor.pgrid = inifield(ini,'mor_pgrid',0);
 
-            fprintf('  < Temperature range [C]:_ _ _ _ _ _ _ [%g,%g] \n',kelvin2celsius(config.mor.T0_min),kelvin2celsius(config.mor.T0_max));
-            fprintf('  < Gas constant range [J/(kg K)]:_ _ _ [%g,%g] \n',config.mor.Rs_min,config.mor.Rs_max);
-            fprintf('  < Parameter Grid Level: _ _ _ _ _ _ _ %u \n',config.mor.pgrid);
+            logger('output','Temperature range [C]',[kelvin2celsius(config.mor.T0_min),kelvin2celsius(config.mor.T0_max)],'[%g,%g]');
+            logger('output','Gas constant range [J/(kg K)]',[config.mor.Rs_min,config.mor.Rs_max],'[%g,%g]');
+            logger('output','Parameter Grid Level',config.mor.pgrid,'%u');
 
             config.mor.samples = sparsegrid([config.mor.T0_min;config.mor.Rs_min],[config.mor.T0_max;config.mor.Rs_max],config.mor.pgrid);
         else
@@ -306,7 +330,7 @@ function R = morgen(network_id,scenario_id,model_id,solver_id,reductor_ids,varar
             config.mor.samples = [scenario.T0;scenario.Rs];
         end%if
 
-        fprintf('\n');
+        logger('line');
 
         nReductors = numel(reductor_ids);
 
@@ -317,27 +341,21 @@ function R = morgen(network_id,scenario_id,model_id,solver_id,reductor_ids,varar
         % Compute (or load) reduced order model (ROM) for each selected reductor
         for k = 1:nReductors
 
-            fprintf('### ');
-
             % Compute and save ROM
             if isa(reductor{k},'function_handle')
 
-                clear(func2str(solver));
-                thunklog(100)
-                off = tic;
-                ROM{k} = reductor{k}(solver,discrete,scenario,config.mor);
-                offline{k} = toc(off);
-                thunklog(0)
+                id_off = tic;
+                [proj,name] = reductor{k}(solver,discrete,scenario,config.mor);
+                offtime = toc(id_off);						% Offline time used by reductor
 
-                fprintf('\n');
-                fprintf('   > Offline Time [s]: _ _ _ _ _ _ _ _ _ %d\n',offline{k});
+                save([rom_path,'/',network_id,'--',model_id,'--',solver_id,'--',reductor_ids{k},'.rom'],'proj','name','offtime','-v7');
 
-                spaces = ROM{k}('save');
-                name = ROM{k}('name');
-                off = offline{k};
-                save([rom_path,'/',network_id,'--',model_id,'--',solver_id,'--',reductor_ids{k},'.rom'],'spaces','name','off','-v7');
+                logger('line',2);
 
-                fprintf('   > Saved as: _ _ _ _ _ _ _ _ _ _ _ _ _ %s \n\n',[network_id,'--',model_id,'--',solver_id,'--',reductor_ids{k},'.rom']);
+                logger('output','Offline Time [s]',offtime,'%.1f');
+                logger('output','Saved as',[network_id,'--',model_id,'--',solver_id,'--',reductor_ids{k},'.rom'],'%s');
+
+                logger('next');
 
             % Load ROM
             else
@@ -348,40 +366,51 @@ function R = morgen(network_id,scenario_id,model_id,solver_id,reductor_ids,varar
 
                     load([rom_path,'/',reductor_ids{k}],'-mat');
 
-                    ROM{k} = @(n) make_rom(name,discrete,spaces,n);
-                    offline{k} = off;
-                    fprintf('%s\n\n',ROM{k}('name'));
-                    fprintf('   > Loaded from file:_ _ _ _ _ _ _ _ _ %s\n\n',reductor_ids{k});
+                    logger('head',name);
+
+                    logger('line');
+
+                    logger('output','Loaded from file',reductor_ids{k},'%s');
+
+                    logger('next');
                 else
 
-                    fprintf('   > Incompatible ROM: %s\n\n',reductor_ids{k}); % TODO emit error!
+                    error(['Incompatible ROM: ',reductor_ids{k}]);
                 end%if
+
+                reductor_ids{k} = reductor_ids{k}(find(reductor_ids{k} == '-',1,'last')+1:find(reductor_ids{k} == '.',1,'last')-1); % NOTE: Argument mutation!
             end%if
 
             labels{k} = name;
+            ROM{k} = @(n) make_rom(discrete,proj,n);
+            offline{k} = offtime;
         end%for
 
+        % Exit if only ROMs are to be computed and not tested
         if not(isempty(varargin)) && any(strcmp(varargin,'notest'))
 
-            R = struct('offline',offline, ...
-                       'method',labels);
+            R = struct('reductors',labels, ...
+                       'offline',offline);
 
-            fprintf(' > Orderly exit:_ _ _ _ _ _ _ _ _ _ _ _ ');
+            logger('exit');
 
             return;
         end%if
+
+        logger('next');
+
     end%if
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% FULL ORDER SIMULATION
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    fprintf('## Computing Reference Solution(s) ... \n\n');
+    logger('head','Computing Reference Solution(s) ...');
 
-    config.eval.parametric = inifield(ini,'eval_parametric','yes',{'no','yes'});
+    config.eval.parametric = inifield(ini,'eval_parametric','true',{'false','true'});
 
     % Sample test parameters
-    if strcmp(config.eval.parametric,'yes') && exist('reductor_ids','var') && not(isempty(reductor_ids))
+    if strcmp(config.eval.parametric,'true') && exist('reductor_ids','var') && not(isempty(reductor_ids))
 
         prom = 1;
         config.eval.ptest = inifield(ini,'eval_ptest',1);
@@ -393,12 +422,11 @@ function R = morgen(network_id,scenario_id,model_id,solver_id,reductor_ids,varar
         config.eval.Rs_min = inifield(ini,'Rs_min',500.0);
         config.eval.Rs_max = inifield(ini,'Rs_max',900.0);
 
-        rand('seed',1009);
         t0_samples = [config.eval.T0_min + abs(config.eval.T0_max - config.eval.T0_min) * rand(1,nSamples), scenario.T0]; ...
         rs_samples = [config.eval.Rs_min + abs(config.eval.Rs_max - config.eval.Rs_min) * rand(1,nSamples), scenario.Rs];
 
-        fprintf('  < Parametric evaluation?_ _ _ _ _ _ _ %s \n',config.eval.parametric);
-        fprintf('  < Number of parameter samples:_ _ _ _ %u \n',config.eval.ptest);
+        logger('input','Parametric evaluation?',config.eval.parametric,'%s');
+        logger('input','Number of parameter samples',config.eval.ptest,'%u');
     else
 
         prom = 0;
@@ -407,10 +435,8 @@ function R = morgen(network_id,scenario_id,model_id,solver_id,reductor_ids,varar
         t0_samples = scenario.T0;
         rs_samples = scenario.Rs;
 
-        fprintf('  < Parametric evaluation?_ _ _ _ _ _ _ no \n');
+        logger('input','Parametric evaluation?','false','%s');
     end%if
-
-    fprintf('\n  ');
 
     n1 = cell(nSamples + prom,1);
     n2 = cell(nSamples + prom,1);
@@ -435,19 +461,19 @@ function R = morgen(network_id,scenario_id,model_id,solver_id,reductor_ids,varar
         n0{p} = norm_l0(ref_output{p}.y,config.network.dt);
     end%for
 
-    fprintf('\n\n');
+    logger('line',2);
 
-    fprintf('  > Steady state iterations:_ _ _ _ _ _ %u \n', ceil(mean(cellfun(@(s) s.steady.iter1,ref_output))));
-    fprintf('  > Steady state extra steps: _ _ _ _ _ %u \n', ceil(mean(cellfun(@(s) s.steady.iter2,ref_output))));
-    fprintf('  > Steady state error: _ _ _ _ _ _ _ _ %g \n', mean(cellfun(@(s) s.steady.err,ref_output)));
-    fprintf('  > Mean compressibility: _ _ _ _ _ _ _ %g \n', mean(cellfun(@(s) s.steady.z0,ref_output)));
-    fprintf('  > Integration time [s]: _ _ _ _ _ _ _ %g \n', mean(cellfun(@(s) s.runtime,ref_output)));
+    logger('output','Steady state iterations',ceil(mean(cellfun(@(s) s.steady_iter1,ref_output))),'%u');
+    logger('output','Steady state extra steps',ceil(mean(cellfun(@(s) s.steady_iter2,ref_output))),'%u');
+    logger('output','Steady state error',mean(cellfun(@(s) s.steady_error,ref_output)),'%g');
+    logger('output','Mean compressibility',mean(cellfun(@(s) s.steady_z0,ref_output)),'%g');
+    logger('output','Integration time [s]',mean(cellfun(@(s) s.runtime,ref_output)),'%.1f');
 
     % Plot input-output of reference solution
     compact = not(isempty(varargin)) && any(strcmp(varargin,'compact'));
     plot_output(plot_path,[network_id,'--',scenario_id,'--',model_id,'--',solver_id],ref_output{end},network,compact);
 
-    fprintf('\n')
+    logger('next');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% REDUCED ORDER MODEL EVALUATION
@@ -455,7 +481,7 @@ function R = morgen(network_id,scenario_id,model_id,solver_id,reductor_ids,varar
 
     if exist('reductor_ids','var') && not(isempty(reductor_ids))
 
-        fprintf('## Evaluating Reduced Order Models ... \n\n');
+        logger('head','Testing Reduced Order Models ...');
 
         config.eval.skip = max(round(inifield(ini,'eval_skip',2)),2);
 
@@ -463,15 +489,12 @@ function R = morgen(network_id,scenario_id,model_id,solver_id,reductor_ids,varar
 
         config.eval.max = min([floor(0.5*eval_max),config.mor.rom_max,discrete.nP,discrete.nQ]);
 
-        eff_order = 2 * config.eval.max;
-
         config.eval.pnorm = inifield(ini,'eval_pnorm',2,{1,2,Inf});
 
-        fprintf('  < Test every n-th ROM:_ _ _ _ _ _ _ _ %u \n',config.eval.skip);
-        fprintf('  < Maximum reduced order:_ _ _ _ _ _ _ %u \n',eff_order);
-        fprintf('  < Parameter norm: _ _ _ _ _ _ _ _ _ _ %u \n',config.eval.pnorm);
+        logger('input','Test every n-th ROM',config.eval.skip,'%u');
+        logger('input','Maximum reduced order',2 * config.eval.max,'%u'); % NOTE: config.eval.max means max red order per variable
 
-        fprintf('\n');
+        logger('line');
 
         redOrder = 1:config.eval.skip:config.eval.max;
         redOrders = numel(redOrder);
@@ -491,7 +514,7 @@ function R = morgen(network_id,scenario_id,model_id,solver_id,reductor_ids,varar
 
         for k = 1:nReductors % For each reductor ...
 
-            fprintf('### %s\n\n',ROM{k}('name'));
+            logger('head',labels{k});
 
             % Preallocate error and timing storage
             online{k} = NaN(nSamples,redOrders);
@@ -502,7 +525,8 @@ function R = morgen(network_id,scenario_id,model_id,solver_id,reductor_ids,varar
             l8{k} = NaN(nSamples,redOrders);
             l0{k} = NaN(nSamples,redOrders);
 
-            thunklog(redOrders)
+            logger('solver','reset');
+
             for p = 1:nSamples % For each test parameter ...
 
                 for l = 1:redOrders % For each reduced order
@@ -516,8 +540,11 @@ function R = morgen(network_id,scenario_id,model_id,solver_id,reductor_ids,varar
                     l8{k}(p,l) = norm_l8(ref_output{p}.y - red_output.y,config.network.dt) / n8{p};
                     l0{k}(p,l) = norm_l0(ref_output{p}.y - red_output.y,config.network.dt) / n0{p};
                 end%for
+
+                logger('solver','reset');
             end%for
-            thunklog(0)
+
+            logger('line');
 
             % Replace NaNs by worst case relative error
             l1{k}(isnan(l1{k}) | (l1{k} > 1.0)) = 1.0;
@@ -540,12 +567,18 @@ function R = morgen(network_id,scenario_id,model_id,solver_id,reductor_ids,varar
             online{k} = mean(online{k},1);
             breven{k} = mean(breven{k},1);
 
-            fprintf('\n\n');
+            logger('next');
         end%for
+
+        logger('next');
+
+        logger('next');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% VISUALIZE RESULTS
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+        logger('head','Generating Plots ...');
 
         yscale = varfield(varargin,'ys',-16);
 
@@ -556,36 +589,57 @@ function R = morgen(network_id,scenario_id,model_id,solver_id,reductor_ids,varar
             base_name = [base_name,'--',plot_id];
         end%if
 
-        plot_error(plot_path,base_name,'L_0',2*redOrder,l0,labels,s0,compact,yscale);
-        plot_error(plot_path,base_name,'L_1',2*redOrder,l1,labels,s1,compact,yscale);
-        plot_error(plot_path,base_name,'L_8',2*redOrder,l8,labels,s8,compact,yscale);
-        plot_error(plot_path,base_name,'L_2',2*redOrder,l2,labels,s2,compact,yscale);
+        plot_error(plot_path,base_name,'L0',2 * redOrder,l0,labels,s0,compact,yscale);
+        plot_error(plot_path,base_name,'L1',2 * redOrder,l1,labels,s1,compact,yscale);
+        plot_error(plot_path,base_name,'L8',2 * redOrder,l8,labels,s8,compact,yscale);
+        plot_error(plot_path,base_name,'L2',2 * redOrder,l2,labels,s2,compact,yscale);
+
+        plot_offline(plot_path,[network_id,'--',model_id,'--',solver_id],offline,labels,compact);
+        plot_online(plot_path,base_name,2 * redOrder,online,labels,compact);
+        plot_breven(plot_path,base_name,2 * redOrder,breven,labels,compact);
+
+        logger('done');
+
+        logger('next');
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% PRINT AND SAVE RESULTS
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+        logger('head',['L2 MORscores (',base_name,')']);
+
+        logger('input','State norm',2,'%u');
+        logger('input','Parameter norm',config.eval.pnorm,'%u');
+        logger('input','Numerical precision',10.0^floor(log10(eps)),'%e');
+        logger('input','Maximum reduced order',2 * config.eval.max,'%u');
+
+        logger('line');
 
         close(figure());
 
-        fprintf('  > L2 MORscores (%s):\n\n',base_name);
-        maxlen = max(cellfun(@numel,labels));
-        cellfun(@(l,s) fprintf(['  %s:',repmat(' ',[1,maxlen-numel(l)]),' %.2f \n'],l,s),labels,s2);
-        save_ini([plot_path,'/',base_name,'_morscore_l2.ini'],labels,s2);
-        fprintf('\n');
+        % For each reductor print L2 MORscore
+        for k = 1:nReductors
 
-        plot_offline(plot_path,[network_id,'--',model_id,'--',solver_id],offline,labels,compact);
-        plot_online(plot_path,base_name,2*redOrder,online,labels,compact);
-        plot_breven(plot_path,base_name,2*redOrder,breven,labels,compact);
+            logger('output',reductor_ids{k},s2{k},'%.4f');
+        end%for
+
+        save_ini([plot_path,'/',base_name,'_morscore_l2.ini'],labels,s2);
 
         R = struct('name',base_name, ...
+                   'reductors',labels, ...
                    'orders',redOrder, ...
                    'l0error',l0, 'l0score',s0, ...
                    'l1error',l1, 'l1score',s1, ...
                    'l2error',l2, 'l2score',s2, ...
                    'l8error',l8, 'l8score',s8, ...
-                   'online',online, 'breven',breven, ...
-                   'method',labels);
+                   'offline',offline, ...
+                   'online',online, ...
+                   'breven',breven);
     else
 
-        R = [];
+        R = ref_output{1}.y;
     end%if
 
-    fprintf(' > Orderly exit:_ _ _ _ _ _ _ _ _ _ _ _ ');
+    logger('exit');
 end
 
