@@ -1,8 +1,8 @@
 # code.ini
 name: Model Order Reduction for Gas and Energy Networks
 shortname: morgen
-version: 1.0
-release-date: 2021-06-22
+version: 1.1
+release-date: 2021-08-08
 id: 10.5281/zenodo.4288509
 id-type: doi
 author: Christian Himpe, Sara Grundel

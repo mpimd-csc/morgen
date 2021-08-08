@@ -1,14 +1,14 @@
 function steady = steadystate(discrete,scenario,config)
 %%% project: morgen - Model Order Reduction for Gas and Energy Networks
-%%% version: 1.0 (2021-06-22)
+%%% version: 1.1 (2021-08-08)
 %%% authors: C. Himpe (0000-0003-2194-6754), S. Grundel (0000-0002-0209-6566)
 %%% license: BSD-2-Clause (opensource.org/licenses/BSD-2-clause)
 %%% summary: Caching steady-state computation.
 
     persistent T0;
     persistent Rs;
-    persistent isdual;
     persistent xs;
+    persistent as;
     persistent ys;
     persistent z0;
     persistent err;
@@ -17,22 +17,17 @@ function steady = steadystate(discrete,scenario,config)
 
     % Caching: Reusable steady state
     if isempty(T0) || isempty(Rs) || ...
-       not((T0 == scenario.T0) && (Rs == scenario.Rs)) || ...
-       not(isdual == isfield(discrete,'dual'))
-
-        clear leastnorm;
+       not((T0 == scenario.T0) && (Rs == scenario.Rs))
 
         T0 = scenario.T0;
         Rs = scenario.Rs;
-
-        isdual = isfield(discrete,'dual');
-
-        x0 = discrete.x0;
         rt = T0 * Rs;
 
-        % Right-hand side
-        b = -(discrete.B * scenario.us + discrete.F * scenario.cp);
-        f = @(x,z) discrete.f(x0,x,scenario.us,rt * z);
+        m0 = zeros(discrete.nPorts,1);
+        n0 = zeros(discrete.nP+discrete.nQ,1);
+
+        iP = 1:discrete.nP;
+        iQ = discrete.nP+1:discrete.nP+discrete.nQ;
 
 %  /  0  Apq \ / ps \   /   -bpd    \
 %  |         | |    | = |           |
@@ -40,14 +35,15 @@ function steady = steadystate(discrete,scenario,config)
 %
 %       A        xs           b
 
-        iP = 1:discrete.nP;
-        iQ = discrete.nP+1:discrete.nP+discrete.nQ;
-
         % Component extraction
         Apq = discrete.A(iP,iQ);
         Aqp = discrete.A(iQ,iP);
+
+        b = -(discrete.B * scenario.us + discrete.F * scenario.cp);
         bpd = b(iP);
         bqs = b(iQ);
+
+        f = @(x,z) discrete.f(n0,x,n0,scenario.us,m0,rt * z);
 
         qs = leastnorm(bpd,Apq); % Only computed once, hence first
         ps = leastnorm(bqs,Aqp); % Repeatedly computed, hence second to exploit caching
@@ -60,14 +56,18 @@ function steady = steadystate(discrete,scenario,config)
 
         iter1 = 1;
 
+        last_err = Inf;
+
         % Simple iterative steady-state refinement
-        while (err > config.maxerror) && (iter1 < config.maxiter)
+        while (err > config.maxerror) && (iter1 < config.maxiter_lin) && (last_err >= err)
 
             ps = leastnorm(bqs - fs(iQ));
 
             z0 = mean(config.compressibility(ps,scenario.T0));
 
             fs = f([ps;qs],z0);
+
+            last_err = err;
 
             err = norm(discrete.A * [ps;qs] - b + fs);
 
@@ -83,7 +83,7 @@ function steady = steadystate(discrete,scenario,config)
 
             [AL,AU,AP] = lu(discrete.E(rt*z0) - config.dt * discrete.A,'vector');
 
-            while (err > config.maxerror) && (iter2 < config.maxiter)
+            while (err > config.maxerror) && (iter2 < config.maxiter_non)
 
                 ts = config.dt * (discrete.A * xs - b + fs);
 
@@ -97,12 +97,15 @@ function steady = steadystate(discrete,scenario,config)
             end%while
         end%if
 
+        as = discrete.A * xs + discrete.B * scenario.us;
+
         ys = discrete.C * xs;
 
         assert_warn(err > config.maxerror,['Inaccurate steady-state! (',num2str(err),' > ',num2str(config.maxerror),')']);
     end%if
 
-    steady = struct('xs',xs, ...
+    steady = struct('as',as, ...
+                    'xs',xs, ...
                     'ys',ys, ...
                     'z0',z0, ...
                     'err',err, ...
@@ -119,22 +122,17 @@ function x = leastnorm(b,A)
     persistent R;
     persistent P;
 
-    if not(exist('OCTAVE_VERSION','builtin'))
+    if 2 == nargin
 
-        if 2 == nargin
+        if exist('OCTAVE_VERSION','builtin')  % OCTAVE
+
+            [Q,R,P] = qr(full(A'),0);
+        else                                  % MATLAB
 
             [Q,R,P] = qr(A',0);
         end%if
-    
-        x = Q * (R' \ b(P));
-    else
-
-        if 2 == nargin
-
-            [Q,R] = qr(full(A'),0);
-        end%if
-    
-        x = Q * (R' \ b);
     end%if
+
+    x = Q * (R' \ b(P));
 end
 

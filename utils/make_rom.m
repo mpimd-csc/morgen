@@ -1,6 +1,6 @@
 function rdiscrete = make_rom(discrete,proj,order)
 %%% project: morgen - Model Order Reduction for Gas and Energy Networks
-%%% version: 1.0 (2021-06-22)
+%%% version: 1.1 (2021-08-08)
 %%% authors: C. Himpe (0000-0003-2194-6754), S. Grundel (0000-0002-0209-6566)
 %%% license: BSD-2-Clause (opensource.org/licenses/BSD-2-clause)
 %%% summary: Reduced order model assembler.
@@ -32,6 +32,6 @@ function rdiscrete = make_rom(discrete,proj,order)
     rdiscrete.B = L1 * discrete.B;
     rdiscrete.F = L1 * discrete.F;
     rdiscrete.C = discrete.C * R1;
-    rdiscrete.f = @(xs,x,u,rtz) L1 * discrete.f(xs,R1 * x,u,rtz);
-    rdiscrete.J = @(xs,x,u,rtz) L1 * discrete.J(xs,R1 * x,u,rtz) * R1;
+    rdiscrete.f = @(as,xs,x,us,u,rtz) L1 * discrete.f(as,xs,R1 * x,us,u,rtz);
+    rdiscrete.J = @(xs,x,us,rtz) L1 * discrete.J(xs,R1 * x,us,rtz) * R1;
 end

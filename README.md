@@ -1,9 +1,9 @@
-![morgen logo](morgen.png) morgen -- Model Order Reduction for Gas and Energy Networks (1.0)
+![morgen logo](morgen.png) morgen -- Model Order Reduction for Gas and Energy Networks (1.1)
 ============================================================================================
 
 **morgen** is an open-source MATLAB and OCTAVE test platform to compare models,
 solvers, and model reduction methods (reductors) for gas networks and other
-energy network systems that are based on the isothermal Euler equations.
+energy network systems that are based on the (isothermal) Euler equations.
 
 ## Compatibility
 
@@ -29,8 +29,10 @@ Please cite the **morgen** platform via its companion paper:
 
 C. Himpe, S. Grundel, P. Benner:
 **Model Order Reduction for Gas and Energy Networks**;
-arXiv (math.OC): 2011.12099, 2021.
-[arXiv:2011.12099](https://arxiv.org/abs/2011.12099)
+Journal of Mathematics in Industry 11: 13, 2021.
+[doi:10.1186/s13362-021-00109-4](https://doi.org/10.1186/s13362-021-00109-4)
+
+You can link to **morgen** via: [git.io/morgen](https://git.io/morgen)
 
 ## Getting Started
 
@@ -55,6 +57,13 @@ To reproduce the experiments from the companion paper,
 
 ```
 > RUNME_HimpeGB21
+```
+
+To reproduce the experiments from the add-on paper,
+**Next-Gen Gas Network Simulation**, run:
+
+```
+> RUNME_HimpeGB21a
 ```
 
 ### Extending **morgen**
@@ -94,13 +103,12 @@ All admissible additional (**string**) arguments are described below:
 * `dt=X`    - Override time step in configuration with X (in seconds)
 * `tf=X`    - Override tunable efficiency factor in configuration with X (positive real)
 * `ys=X`    - Force minimum y-scale for error plots with 10^X (default: -16)
-* `ord=X`   - Override evaluation order in configuration with X (natural number)
-* `pid=X`   - Add custom string identifier to plots (default: '')
+* `ord=X`   - Override maximum reduced order in configuration with X (natural number)
+* `pid=X`   - Add custom string identifier to plot files (default: '')
 * `notest`  - Do not test the reduced order models
 * `compact` - Display plots all in one figure
 
-The `morgen.m` function returns a structure `R` with members depending on the
-arguments.
+The `morgen.m` function returns a structure `R` with members depending on the arguments.
 If only reduced order models are computed:
 
 * `.reductors` (**cell**) Array of strings with names of the reductors
@@ -117,7 +125,8 @@ If reduced order models are computed and tested:
 * `.online`    (**cell**) Array of average relative online times for the reductors
 * `.breven`    (**cell**) Array of average relative offline/online break even numbers
 
-If only a simulation is run, `R` contains the discrete output trajectory as an outputs-times-time-steps matrix.
+If only a simulation is run, `R` is a matrix,
+and contains the discrete output trajectory with dimensions outputs-times-time-steps.
 
 ### Network
 
@@ -128,28 +137,28 @@ which also specifies its edge type, and their physical dimensions and properties
 
 * A network must have at least one supply node!
 * All boundary nodes (supply or demand) must connect by exactly one edge!
-    * Short pipes can be inserted to enforce this.
+  * Short pipes can be inserted to enforce this.
 * The edge from a supply node must be directed away from it!
-    * Hence, no two supply nodes can be directly connected.
+  * Hence, no two supply nodes can be directly connected.
 * The edge to a demand node must be directed toward it!
-    * Hence, no two demand nodes can be directly connected.
+  * Hence, no two demand nodes can be directly connected.
 
 #### Available Networks
 
 All available network datasets are listed with the network's number of
 
- * internal junction nodes (`n0`),
- * supply boundary nodes (`nS`), and
- * demand boundary nodes (`nD`).
+* internal junction nodes (`n0`),
+* supply boundary nodes (`nS`), and
+* demand boundary nodes (`nD`).
 
 ##### Toy Networks
 
-* `diamond`  - Diamond Network  (`n0=8, nS=1, nD=1`)
-* `fork1`    - Forked Pipeline  (`n0=12, nS=1, nD=2`)
-* `fork2`    - Forked Pipeline  (`n0=12, nS=2, nD=1`)
-* `comptest` - Compressor Test  (`n0=1, nS=1, nD=1`)
+* `diamond`  - Diamond Network     (`n0=8, nS=1, nD=1`)
+* `fork1`    - Forked Pipeline     (`n0=12, nS=1, nD=2`)
+* `fork2`    - Forked Pipeline     (`n0=12, nS=2, nD=1`)
+* `comptest` - Compressor Test     (`n0=1, nS=1, nD=1`)
 * `paratest` - Parallel Pipes Test (`n0=2, nS=1, nD=1`)
-* `PamBD16`  - Triangle Network (`n0=0, nS=1, nD=2`)
+* `PamBD16`  - Triangle Network    (`n0=0, nS=1, nD=2`)
 
 ##### Synthetic Networks
 
@@ -162,6 +171,7 @@ All available network datasets are listed with the network's number of
 * `GasLib24`    - Medium Network (`n0=14, nS=3, nD=5`)
 * `GasLib40`    - Medium Network (`n0=40, nS=3, nD=29`)
 * `GasLib135`   - Medium Network (`n0=135, nS=3, nD=45`)
+* `PelLL17a`    - Medium Network (`n0=41, nS=1, nD=15`)
 
 ##### Pipelines
 
@@ -169,6 +179,10 @@ All available network datasets are listed with the network's number of
 * `Cha09`    - Pipeline (`n0=0, nS=1, nD=1`)
 * `RodS18`   - Tree     (`n0=6, nS=1, nD=4`)
 * `Guy67`    - Tree     (`n0=8, nS=1, nD=8`)
+* `LotH67a`  - Pipeline (`n0=0, nS=1, nD=1`)
+* `LotH67b`  - Pipeline (`n0=0, nS=1, nD=1`)
+* `LotH67c`  - Tree     (`n0=6, nS=2, nD=2`)
+* `LotH67d`  - Tree     (`n0=4, nS=2, nD=2`)
 
 ##### Realistic Networks
 
@@ -210,50 +224,46 @@ Each line below the first holds one edge definition with the columns:
 * Pipe height difference [`m`] (positive real)
 * Pipe roughness [`m`] (positive real)
 
-Thus, the gas network's directed graph is represented as an edge list, whereas
-the edge directions are not corresponding to flow directions except for boundary
-nodes.
+Thus, the gas network's directed graph is represented as an edge list,
+whereas the edge directions are not corresponding to flow directions except for boundary nodes.
 Note, currently only positive integers can be used as start and end identifiers.
 
 #### Parsed Network Structure
 
 A parsed network `.net` file is given as a `network` structure with members:
 
-* `network`          (**struct**)
-    * `.length`      (**vector**) Pipe lengths
-    * `.incline`     (**vector**) Pipe inclines
-    * `.diameter`    (**vector**) Pipe diameters
-    * `.roughness`   (**vector**) Pipe roughnesses
-    * `.nomLen`      (**vector**) Per pipe length
-    * `.A0`          (**matrix**) Incidence matrix reduced by supply nodes
-    * `.Ac`          (**matrix**) Incidence matrix of only compressor outlet nodes 
-    * `.Bs`          (**matrix**) Incidence matrix of supply nodes
-    * `.Bd`          (**matrix**) Incidence matrix of demand nodes
-    * `.Fc`          (**vector**) Load vector of compressors
-    * `.nEdges`      (**scalar**) Number of edges
-    * `.nSupply`     (**scalar**) Number of supply nodes
-    * `.nDemand`     (**scalar**) Number of demand nodes
-    * `.nInternal`   (**scalar**) Number of internal nodes
-    * `.nCompressor` (**scalar**) Number of compressors
+* `network`        (**struct**)
+  * `.length`      (**vector**) Pipe lengths
+  * `.incline`     (**vector**) Pipe inclines
+  * `.diameter`    (**vector**) Pipe diameters
+  * `.roughness`   (**vector**) Pipe roughnesses
+  * `.nomLen`      (**vector**) Per pipe length
+  * `.A0`          (**matrix**) Incidence matrix reduced by supply nodes
+  * `.Ac`          (**matrix**) Incidence matrix of only compressor outlet nodes 
+  * `.Bs`          (**matrix**) Incidence matrix of supply nodes
+  * `.Bd`          (**matrix**) Incidence matrix of demand nodes
+  * `.Fc`          (**vector**) Load vector of compressors
+  * `.nEdges`      (**scalar**) Number of edges
+  * `.nSupply`     (**scalar**) Number of supply nodes
+  * `.nDemand`     (**scalar**) Number of demand nodes
+  * `.nInternal`   (**scalar**) Number of internal nodes
+  * `.nCompressor` (**scalar**) Number of compressors
 
 ### Scenario
 
-A scenario data set describes the boundary values and external inhomogeneities
-of the gas net. Transient behaviour of supply and demand functions is
-represented as step functions in compressed form by only marking changes.
-Each network has a training scenario (`training.ini`), which has constant
-boundary values for reduced order model assembly.
+A scenario data set describes the boundary values and external inhomogeneities of the gas net.
+Transient behaviour of supply and demand functions is represented as step functions in compressed form by only marking changes.
+Each network has a training scenario (`training.ini`), which has constant boundary values for reduced order model assembly.
 
 #### File Format
 
 A scenario is encoded in an [INI](https://en.wikipedia.org/wiki/INI_file) file,
-with the extension `.ini`. Each line holds a key-value pair, for the following
-keys:
+with the extension `.ini`. Each line holds a key-value pair, for the following keys:
 
 * `T0` - Average ambient temperature [`C`]
 * `Rs` - Average specific gas constant [`J/(kg*K)`]
 * `tH` - Time horizon [`s`]
-* `vs` - Valve setting [`1`] (pipe separated list of {0,1}) {UNDER CONSTRUCTION}
+* `vs` - Valve setting [`1`] (pipe separated list of {0,1}) {UNDER CONSTRUCTION, currently treated as short pipe}
 * `cp` - Compressor (output) pressure [`bar`] (pipe separated list)
 * `up` - Supply pressure changes [`bar`] (pipe separated list of semi-colon separated series)
 * `uq` - Demand flow changes [`kg/s`] (pipe separated list of semi-colon separated series)
@@ -264,12 +274,12 @@ keys:
 A parsed network `.ini` file is given as:
 
 * `scenario` (**struct**)
-    * `.T0`  (**scalar**) Global mean temperature
-    * `.Rs`  (**scalar**) Global mean 
-    * `.tH`  (**scalar**) Time horizon
-    * `.us`  (**vector**) Steady-state input
-    * `.ut`  (**handle**) Function handle with signature u_t = ut(t)
-    * `.cp`  (**vector**) Compressor outlet pressures
+  * `.T0`    (**scalar**) Global mean temperature
+  * `.Rs`    (**scalar**) Global mean 
+  * `.tH`    (**scalar**) Time horizon
+  * `.us`    (**vector**) Steady-state input
+  * `.ut`    (**handle**) Function handle with signature u_t = ut(t)
+  * `.cp`    (**vector**) Compressor outlet pressures
 
 ### Model
 
@@ -296,17 +306,17 @@ and an (uni-directionally coupled algebraic) output equation.
 #### Returns
 
 * `discrete`  (**struct**) (Semi-)Discrete model structure
-  - `.nP`     (**scalar**) Number of pressure states
-  - `.nQ`     (**scalar**) Number of mass-flux states
-  - `.nPorts` (**scalar**) Number of ports
-  - `.E`      (**handle**) Mass matrix function handle Ertz = E(rtz)
-  - `.A`      (**matrix**) System matrix
-  - `.B`      (**matrix**) Input matrix (models boundary nodes)
-  - `.F`      (**matrix**) Source matrix (models the compressor action)
-  - `.C`      (**matrix**) Output matrix (sensors at boundary nodes)
-  - `.f`      (**handle**) Nonlinear vector field x = f(xs,x,u,rtz)
-  - `.J`      (**handle**) Jacobian x = J(xs,x,u,rtz)
-  - `.dual`    (**bool**)  This is only a member (of any value) if it is a dual model!
+  * `.nP`     (**scalar**) Number of pressure states
+  * `.nQ`     (**scalar**) Number of mass-flux states
+  * `.nPorts` (**scalar**) Number of ports
+  * `.E`      (**handle**) Mass matrix function handle Ertz = E(rtz)
+  * `.A`      (**matrix**) System matrix
+  * `.B`      (**matrix**) Input matrix (models boundary nodes)
+  * `.F`      (**matrix**) Source matrix (models the compressor action)
+  * `.C`      (**matrix**) Output matrix (sensors at boundary nodes)
+  * `.f`      (**handle**) Nonlinear vector field x = f(as,xs,x,us,u,rtz)
+  * `.J`      (**handle**) Jacobian x = J(xs,x,u,rtz)
+  * `.dual`    (**bool**)  This is only a member (of any value) if it is a dual model!
 
 #### Available Models
 
@@ -315,7 +325,8 @@ and an (uni-directionally coupled algebraic) output equation.
 
 #### Notes
 
-* The argument `xs` is the steady state computed in the solver.
+* The argument `xs` is the steady state computed in the solver (wrapper).
+* The argument `as` is the system matrix applied to the steady state: `discrete.A * xs`.
 * The argument `x` in nonlinearity `f` and Jacobian `J` refers to the difference to the steady-state.
   This means `xs + x` yields the actual state.
 * Only the components `E`, `f` and `J` are parametrized.
@@ -325,9 +336,8 @@ and an (uni-directionally coupled algebraic) output equation.
 
 ### Solver
 
-A solver is a time stepper that simulates a trajectory of a model and a
-scenario. The prerequisite steady-state initial value is computed from the
-scenario's boundary values.
+A solver is a time stepper that simulates a trajectory of a model and a scenario.
+The prerequisite steady-state initial value is computed from the scenario's boundary values.
 
 #### Interface
 
@@ -353,10 +363,41 @@ scenario's boundary values.
 
 #### Available Solvers
 
-* `generic` - Second-order implicit adaptive `ode23s` Rosenbrock solver
-* `imex1`   - First-order implicit-explicit solver
-* `imex2`   - Second-order implicit-explicit Runge-Kutta solver
-* `rk4`     - Fourth-order "classic" explicit Runge-Kutta solver (unstable, use only for testing)
+* `generic`    - Second-order implicit adaptive `ode23s` Rosenbrock solver
+* `imex1`      - First-order implicit-explicit solver
+* `imex2`      - Second-order implicit-explicit Runge-Kutta solver
+* `rk4`        - Fourth-order "classic" explicit Runge-Kutta solver (unstable, use only for testing)
+* `rk2hyp`     - Second-order explicit Runge-Kutta solver (increased stability)
+* `rk4hyp`     - Fourth-order explicit Runge-Kutta solver (increased stability)
+
+* `linear_export` - Linearize and export state-space model (wraps `imex1`)
+
+#### Model Export
+
+The `linear_export` "solver" is not an actual solver,
+but exports a linearization with fixed parametrization:
+```
+E x'(t) = A x(t) + B u(t) + F,
+
+   y(t) = C x(t),
+```
+of the selected network-scenario as a `(E,A,B,C,F)` state-space model, with
+the load vector `F` jointly describing the compressors, steady-state, and
+steady-state effects:
+```
+F := F * c_p + A * xs + B * us.
+```
+These sparse system matrices are stored in a `.mat` file and named
+`network_id--scenario_id--IySxOy.mat`, where `y` is the number of boundary ports
+(inputs and outputs), and `x` is the discretized state-space dimension.
+
+* Internally, `linear_export` calls the `imex1` solver to return a solution.
+
+* For the `linear_export` "solver", the `model_gravity` configuration should be
+  set to `none`.
+
+* To obtain a `(E,A,B,C)` system, the load vector `F` can be concatenated to the
+  input matrix `B`, i.e.: `B' := [B, F]`, incrementing the number of inputs.
 
 ### Reductors
 
@@ -420,15 +461,15 @@ currently implemented:
   the reduced order model.
 
 Note that tests can only be called from the **morgen** base directory,
-after running the `SETUP` script or manually adding the `tests` folder to the path
+after running the `SETUP` script, or manually adding the `tests` folder to the path:
 ```
 addpath('tests');
 ```
 
 #### Available Tests
 
-The available experiments are listed by running the `SETUP` script, which lists
-the contents of the `tests` folder.
+The available experiments are listed by running the `SETUP` script,
+which lists the contents of the `tests` folder.
 
 #### Reduced Order Models
 
@@ -447,9 +488,15 @@ instead of the reductor identifier.
 
 #### Results 
 
-Plots and [MORscores](https://doi.org/10.1007/978-3-030-72983-7_7) computed by `morgen.m`
-are stored in the `z_plots` folder (or the folder specified by the `morgen_plots`
-configuration entry).
+Plots and MORscores computed by `morgen.m` are stored in the `z_plots` folder
+(or the folder specified by the `morgen_plots` configuration entry).
+
+#### MORscore
+
+The [MORscore](https://doi.org/10.1007/978-3-030-72983-7_7) is a benchmark index
+measuring the area above the model reduction error graph, which is also plotted.
+This score jointly assesses the model reduction goals of minimum size and maximum accuracy.
+Unstable reduced order models are counted as evaluated with relative error of `1.0`.
 
 ## Configuration
 
@@ -469,17 +516,19 @@ are used.
 * `model_friction`        (**String**) Friction factor model, select from `hofer`, `nikuradse`, `altshul`, `schifrinson`, `pmt1025`, `igt`, default: `schifrinson`
 * `model_compressibility` (**String**) Compressibility factor model, select from: `ideal`, `dvgw`, `aga88`, `papay`, default: `aga88`
 * `model_compref`         (**String**) Reference for compressibility: `steady`, `normal`, default: `steady`
+* `model_gravity`         (**String**) Gravity computation: `none`, `static`, `dynamic`, default: `static`
 
-* `steady_maxiter`  (**Positive Integer**) Number of iterations to refine steady-state estimation, default: `1000`
-* `steady_maxerror` (**Positive Float**) Maximal error of refined steady-state, default: `1e-6`
-* `steady_Tc`       (**Float**) Critical temperature in Celsius, default: `-82.595`
-* `steady_pc`       (**Float**) Critical pressure in Bar, default: `45.988`
-* `steady_pn`       (**Float**) Normal pressure in Bar, default: `1.01325`
+* `steady_maxiter_lin` (**Positive Integer**) Number of least-norm iterations to refine steady-state estimation, default: `20`
+* `steady_maxiter_non` (**Positive Integer**) Number of time-step iterations to refine steady-state estimation, default: `1000`
+* `steady_maxerror`    (**Positive Float**) Maximal error of refined steady-state, default: `1e-6`
+* `steady_Tc`          (**Float**) Critical temperature in Celsius, default: `-82.595`
+* `steady_pc`          (**Float**) Critical pressure in Bar, default: `45.988`
+* `steady_pn`          (**Float**) Normal pressure in Bar, default: `1.01325`
 
 * `solver_relax` (**Float in (0,1]**) IMEX solver relaxation, default: `1.0`
 
 * `T0_min` (**Float**) Minimum ambient temperature in Celsius, default: `0.0`
-* `T0_max` (**Float**) Maximum ambient temperature in Celsius, default: `25.0`
+* `T0_max` (**Float**) Maximum ambient temperature in Celsius, default: `20.0`
 * `Rs_min` (**Float**) Minimum specific gas constant in [J/(kg*K)], default: `500.0`
 * `Rs_max` (**Float**) Maximum specific gas constant in [J/(kg*K)], default: `600.0`
 
@@ -493,6 +542,7 @@ are used.
 * `eval_max`        (**Positive Integer**) Maximum reduced order to evaluate, default: `200` (use `Inf` for maximum possible)
 * `eval_parametric` (**Boolean**) Parametric reduced order model evaluation: `true`, `false`, default: `true`
 * `eval_ptest`      (**Positive Integer**) Number of test parameters, default: `5`
+* `eval_gain`       (**Boolean**) Use gain correction: `true`, `false`, default: `true`
 
 ### Internal Configuration Structure
 
@@ -501,10 +551,10 @@ Internally, the configuration is stored in a structure of structures as follows:
 * `config`     (**struct**)
   * `.network` (**struct**) Members: `.dt`, `.vmax`, `.cfl`
   * `.model`   (**struct**) Members: `.reynolds`, `.friction`
-  * `.steady`  (**struct**) Members: `.dt`, `.maxiter`, `.maxerror`, `.Tc`, `.pc`, `.pn`, `.compressibility`
+  * `.steady`  (**struct**) Members: `.dt`, `.maxiter_lin`, `.maxiter_non`, `.maxerror`, `.Tc`, `.pc`, `.pn`, `.compressibility`
   * `.solver`  (**struct**) Members: `.dt`, `.relax`
-  * `.mor`     (**struct**) Members: `.rom_max`, `.parametric`, `.solver`, `.excitation`, `.T0_min`, `.T0max`, `.Rs_min`, `.Rs_max`, `.pgrid`
-  * `.eval`    (**struct**) Members: `.parametric`, `.ptest`, `T0_min`, `.T0max`, `.Rs_min`, `.Rs_max`, `.skip`, `.max`, `.pnorm`
+  * `.mor`     (**struct**) Members: `.rom_max`, `.parametric`, `.solver`, `.excitation`, `.T0_min`, `.T0_max`, `.Rs_min`, `.Rs_max`, `.pgrid`
+  * `.eval`    (**struct**) Members: `.parametric`, `.ptest`, `.T0_min`, `.T0_max`, `.Rs_min`, `.Rs_max`, `.skip`, `.max`, `.pnorm`
 
 ## Temperature Units
 
@@ -551,13 +601,37 @@ cmp_friction(Re,D,k)
 cmp_compressibility(p,T,pc,Tc)
 ```
 
+## Notes
+
+Based on numerous numerical experiments we _currently_ recommend the following
+model-solver-reductor ensemble(s):
+
+* Model:    `ode_end`
+* Solver:   `imex1`
+* Reductor: `eds_ro_l`
+
 ## Log
 
+* 1.1 (2021-08-08): [doi:10.5281/zenodo.5168949](https://doi.org/10.5281/zenodo.5168949)
+  * `ADDED`    optional static gravity term
+  * `ADDED`    optional gain correction
+  * `ADDED`    explicit rk2 solver with increased stability
+  * `ADDED`    explicit rk4 solver with increased stability
+  * `ADDED`    linearized model export pseudo-solver
+  * `CHANGED`  nonlinear vector field model-interface
+  * `IMPROVED` ROM test logging
+  * `IMPROVED` steady state solver stopping criteria
+  * `IMPROVED` plot presentation
+  * `FIXED`    generic path separators
+  * `FIXED`    solver caching
+  * `FIXED`    rk4 solver
+  * `FIXED`    compact plot labels
+
 * 1.0 (2021-06-22): [doi:10.5281/zenodo.5012357](https://doi.org/10.5281/zenodo.5012357)
-  * `ADDED` configurable CFL constant
-  * `ADDED` networks and tests
-  * `ADDED` psi2bar converter tool
-  * `ADDED` tunable efficiency factor
+  * `ADDED`    configurable CFL constant
+  * `ADDED`    networks and tests
+  * `ADDED`    psi2bar converter tool
+  * `ADDED`    tunable efficiency factor
   * `IMPROVED` steady-state interface
   * `IMPROVED` model-solver interface
   * `IMPROVED` reductor interface
@@ -566,10 +640,10 @@ cmp_compressibility(p,T,pc,Tc)
   * `IMPROVED` vf2kgs tool
 
 * 0.99 (2021-04-12): [doi:10.5281/zenodo.4680265](https://doi.org/10.5281/zenodo.4680265)
-  * `ADDED` gopod reductor
-  * `ADDED` linear reductor variants
-  * `ADDED` SciGRID_gas CSV converter
-  * `ADDED` DEMO code
+  * `ADDED`    gopod reductor
+  * `ADDED`    linear reductor variants
+  * `ADDED`    SciGRID_gas CSV converter
+  * `ADDED`    DEMO code
   * `IMPROVED` model structure
 
 * 0.9 (2020-11-24): [doi:10.5281/zenodo.4288510](https://doi.org/10.5281/zenodo.4288510)
@@ -578,45 +652,54 @@ cmp_compressibility(p,T,pc,Tc)
 ## References
 
 * C. Himpe, S. Grundel, P. Benner: **Model Order Reduction for Gas and Energy Networks**;
-  arXiv (math.OC): 2011.12099, 2021. [arXiv:2011.12099](https://arxiv.org/abs/2011.12099)
+  Journal of Mathematics in Industry 11: 13, 2021.
+  [doi:10.1186/s13362-021-00109-4](https://doi.org/10.1186/s13362-021-00109-4)
   * See also the references listed therein.
 
-* C. Himpe: **Comparing (Empirical-Gramian-Based) Model Order Reduction Algorithms**;
-  in: Model Reduction of Complex Dynamical Systems: Accepted, 2021. [doi:10.1007/978-3-030-72983-7_7](https://doi.org/10.1007/978-3-030-72983-7_7)
+* C. Himpe, S. Grundel, P. Benner: **Next-Gen Gas Network Simulation**;
+  arXiv (math.OC): 2108.02651, 2021.
+  [arxiv:2108.02651](https://arxiv.org/abs/2108.02651)
 
 * P. Benner, S. Grundel, C. Himpe, C. Huck, T. Streubel, C. Tischendorf: **Gas Network Benchmark Models**;
-  in: Applications of Differential-Algebraic Equations: Examples and Benchmarks: 171--197, 2019. [doi:10.1007/11221_2018_5](https://doi.org/10.1007/11221_2018_5)
+  in: Applications of Differential-Algebraic Equations: Examples and Benchmarks: 171--197, 2019.
+  [doi:10.1007/11221_2018_5](https://doi.org/10.1007/11221_2018_5)
 
-* T. Clees, A. Baldin, P. Benner, S. Grundel, C. Himpe, B. Klaassen, F. Küsters, N. Marheineke, L. Nikitina, I. Nikitin, J. Pade, N. Stahl, C. Strohm, C. Tischendorf, A. Wirsen: **MathEnergy – Mathematical Key Technologies for Evolving Energy Grids**;
-  in: Mathematical Modeling, Simulation and Optimization for Power Engineering and Management: 233--262, 2021. [doi:10.1007/978-3-030-62732-4_11](https://doi.org/10.1007/978-3-030-62732-4_11)
+* C. Himpe: **Comparing (Empirical-Gramian-Based) Model Order Reduction Algorithms**;
+  in: Model Reduction of Complex Dynamical Systems: 2021.
+  [doi:10.1007/978-3-030-72983-7_7](https://doi.org/10.1007/978-3-030-72983-7_7)
 
-* P. Benner, S. Grundel, C. Himpe: **Efficient Gas Network Simulations**;
-  in: German Success Stories in Industrial Mathematics, In Press, 2021.
+* C. Himpe, S. Grundel, P. Benner: **Efficient Gas Network Simulations**;
+  in: German Success Stories in Industrial Mathematics: 2021.
+  [doi:10.1007/978-3-030-81455-7](https://doi.org/10.1007/978-3-030-81455-7)
+
+* T. Clees, A. Baldin, P. Benner, S. Grundel, C. Himpe, B. Klaassen, F. Küsters, N. Marheineke,
+  L. Nikitina, I. Nikitin, J. Pade, N. Stahl, C. Strohm, C. Tischendorf, A. Wirsen: **MathEnergy – Mathematical Key Technologies for Evolving Energy Grids**;
+  in: Mathematical Modeling, Simulation and Optimization for Power Engineering and Management: 233--262, 2021.
+  [doi:10.1007/978-3-030-62732-4_11](https://doi.org/10.1007/978-3-030-62732-4_11)
 
 ## Roadmap
 
-### 1.1
+### 1.2
 
-* [Main]   `ADD` gain match testing
-* [Solver] `ADD` stabilized explicit solver
-* [Solver] `ADD` steady state stopping criteria
-* [Plots]  `ADD` reduced order network visualization
-* [Gui]    `ADD` launcher
-* [Docu]   `FIX` update references and citation
-* [Main]   `FIX` use `filesep` instead of `/`
-* [Plots]  `FIX` axis labels depending on single or compact plot
-* [Octave] `FIX` incompatibilities in `format_network` (`textscan`)
-* [Octave] `FIX` slow `ode23s`
+* [Main]     `ADD` print total time
+* [Plots]    `ADD` MORscore horizontal bar plot
+* [Setup]    `ADD` list all scenarios per network in `SETUP`
+* [Setup]    `ADD` graphical user interface launcher
+* [Octave]   `FIX` slow `ode23s`
 
 ### 2.0
 
+* [Model]    `ADD` variable supply-demand input-output boundaries
 * [Model]    `ADD` scenario valve handling
-* [Model]    `ADD` DAE model
 * [Model]    `ADD` decouplers module
-* [Model]    `ADD` generic compressors as input/output combination
+* [Model]    `ADD` generic compressors as input-output combination
+* [Model]    `ADD` FVM model
+* [Model]    `ADD` DAE model
 * [Solver]   `ADD` DAE Euler solver
 * [Solver]   `ADD` co-simulation interface
-* [Reductor] `ADD` hyper-reductor module (i.e. DMD, DEIM, Q-DEIM, Numerical linearization)
+* [Reductor] `ADD` hyper-reductor module (DMD, DEIM, Q-DEIM, Numerical linearization)
+* [Reductor] `ADD` stabilization post-processing
+* [Octave]   `FIX` incompatibilities in `format_network` (`textscan`)
 
 ## Development Guidelines
 

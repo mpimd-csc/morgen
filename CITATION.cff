@@ -1,0 +1,27 @@
+cff-version: 1.1.0
+message: "Please cite the following work when using this software."
+authors:
+  - family-names: Himpe
+    given-names: Christian
+    orcid: https://orcid.org/0000-0003-2194-6754
+  - family-names: Grundel
+    given-names: Sara
+    orcid: https://orcid.org/0000-0002-0209-6566
+  - family-names: Benner
+    given-names: Peter
+    orcid: https://orcid.org/0000-0003-3362-4103
+title: "Model Order Reduction for Gas and Energy Networks"
+doi: 10.1186/s13362-021-00109-4
+url: https://git.io/morgen
+version: 1.1
+date-released: 2021-08-08
+keywords:
+  - "dimension reduction"
+  - "model reduction"
+  - "model order reduction"
+  - "gas networks"
+  - "gas transport"
+  - "gas pipeline"
+  - "natural gas"
+  - "digital twins"
+

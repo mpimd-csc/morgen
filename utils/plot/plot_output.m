@@ -1,6 +1,6 @@
 function plot_output(plot_path,name,solution,network,compact)
 %%% project: morgen - Model Order Reduction for Gas and Energy Networks
-%%% version: 1.0 (2021-06-22)
+%%% version: 1.1 (2021-08-08)
 %%% authors: C. Himpe (0000-0003-2194-6754), S. Grundel (0000-0002-0209-6566)
 %%% license: BSD-2-Clause License (opensource.org/licenses/BSD-2-clause)
 %%% summary: Plot mass flow at supply nodes and pressure at demand nodes.
@@ -70,7 +70,8 @@ function plot_output(plot_path,name,solution,network,compact)
 
     if not(compact)
 
-        print(fig,'-depsc','-painters',[plot_path,'/',name,'_output.eps']);
+        print(fig,'-depsc','-painters',[plot_path,filesep,name,'_output.eps']);
+        drawnow;
     end%if
 end
 

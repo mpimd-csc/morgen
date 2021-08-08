@@ -1,6 +1,6 @@
 function cleanup()
 %%% project: morgen - Model Order Reduction for Gas and Energy Networks
-%%% version: 1.0 (2021-06-22)
+%%% version: 1.1 (2021-08-08)
 %%% authors: C. Himpe (0000-0003-2194-6754), S. Grundel (0000-0002-0209-6566)
 %%% license: BSD-2-Clause (opensource.org/licenses/BSD-2-clause)
 %%% summary: morgen on-exit-cleanup.
@@ -8,6 +8,8 @@ function cleanup()
     clear logger;
     clear steadystate;
     clear rk4;
+    clear rk2hyp;
+    clear rk4hyp;
     clear imex1;
     clear imex2;
 
@@ -19,6 +21,7 @@ function cleanup()
     else
 
         warning('on','MATLAB:nearlySingularMatrix');
+        warning('on','MATLAB:Axes:NegativeDataInLogAxis');
     end%if
 
     fprintf('Bye\n\n');

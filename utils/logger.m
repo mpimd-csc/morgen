@@ -1,9 +1,9 @@
 function logger(t,s,v,f)
 %%% project: morgen - Model Order Reduction for Gas and Energy Networks
-%%% version: 1.0 (2021-06-22)
+%%% version: 1.1 (2021-08-08)
 %%% authors: C. Himpe (0000-0003-2194-6754), S. Grundel (0000-0002-0209-6566)
 %%% license: BSD-2-Clause (opensource.org/licenses/BSD-2-clause)
-%%% summary: declarative logging functions
+%%% summary: Declarative logging functions
 
     persistent level;
     persistent column;
@@ -75,7 +75,7 @@ function logger(t,s,v,f)
                 level = level - 1;    
             end%if
 
-            logger('solver','reset');
+            column = 1;
 
         case 'solver'
 
@@ -94,10 +94,10 @@ function logger(t,s,v,f)
 
                 if COL_MAX == column 
 
-                   column = 1;
+                    column = 1;
                 else
 
-                   column = column + 1;
+                    column = column + 1;
                 end%if
             end%if
 
@@ -121,3 +121,4 @@ function logger(t,s,v,f)
 
     end%switch
 end
+

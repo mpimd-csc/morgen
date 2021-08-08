@@ -1,6 +1,6 @@
 function solution = imex1(discrete,scenario,config)
 %%% project: morgen - Model Order Reduction for Gas and Energy Networks
-%%% version: 1.0 (2021-06-22)
+%%% version: 1.1 (2021-08-08)
 %%% authors: C. Himpe (0000-0003-2194-6754), S. Grundel (0000-0002-0209-6566)
 %%% license: BSD-2-Clause (opensource.org/licenses/BSD-2-clause)
 %%% summary: 1st order IMEX solver.
@@ -20,6 +20,8 @@ function solution = imex1(discrete,scenario,config)
        not(isdual == isfield(discrete,'dual')) || ...
        not(numel(AP) == discrete.nP + discrete.nQ)
 
+        Rs = scenario.Rs;
+        T0 = scenario.T0;
         isdual = isfield(discrete,'dual');
 
         [AL,AU,AP] = lu(discrete.E(rtz) - (config.relax * config.dt) * discrete.A,'vector');
@@ -28,7 +30,7 @@ function solution = imex1(discrete,scenario,config)
     tID = tic;
 
     Fcp = discrete.F * scenario.cp;
-    fp = @(x,u) Fcp + discrete.B * u + discrete.f(config.steady.xs,x,u,rtz);
+    fp = @(x,u) Fcp + discrete.B * u + discrete.f(config.steady.as,config.steady.xs,x,scenario.us,u,rtz);
 
     t = 0:config.dt:scenario.tH;
     K = numel(t);
@@ -41,9 +43,11 @@ function solution = imex1(discrete,scenario,config)
     % Time stepper
     for k = 2:K
 
-        u(:,k) = u(:,k) + scenario.ut(t(k));
+        uk = scenario.ut(t(k));
 
-        zk = config.dt * (discrete.A * xk + fp(xk,u(:,k)));
+        u(:,k) = u(:,k) + uk;
+
+        zk = config.dt * (discrete.A * xk + fp(xk,uk));
 
         xk = xk + AU \ (AL \ zk(AP));
 

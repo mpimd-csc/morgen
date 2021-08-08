@@ -1,6 +1,6 @@
 function plot_breven(plot_path,name,orders,data,labels,compact)
 %%% project: morgen - Model Order Reduction for Gas and Energy Networks
-%%% version: 1.0 (2021-06-22)
+%%% version: 1.1 (2021-08-08)
 %%% authors: C. Himpe (0000-0003-2194-6754), S. Grundel (0000-0002-0209-6566)
 %%% license: BSD-2-Clause (opensource.org/licenses/BSD-2-clause)
 %%% summary: plot comparable data as lines.
@@ -38,6 +38,6 @@ function plot_breven(plot_path,name,orders,data,labels,compact)
     if not(compact)
 
         legend([labels;''],'location','SouthOutside');
-        print(fig,'-depsc',[plot_path,'/',name,'_breven.eps']);
+        print(fig,'-depsc',[plot_path,filesep,name,'_breven.eps']);
     end%if
 end

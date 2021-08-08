@@ -1,6 +1,6 @@
 function plot_online(plot_path,name,orders,data,labels,compact)
 %%% project: morgen - Model Order Reduction for Gas and Energy Networks
-%%% version: 1.0 (2021-06-22)
+%%% version: 1.1 (2021-08-08)
 %%% authors: C. Himpe (0000-0003-2194-6754), S. Grundel (0000-0002-0209-6566)
 %%% license: BSD-2-Clause License (opensource.org/licenses/BSD-2-clause)
 %%% summary: Plot comparable data as lines.
@@ -25,7 +25,7 @@ function plot_online(plot_path,name,orders,data,labels,compact)
         semilogy(orders(:),data{k}(:),'Color',colors(k,:),'LineWidth',4);
     end%for
 
-    semilogy(orders(:),ones(1,numel(orders(:))),'k','LineWidth',4);
+    semilogy(orders(:),ones(1,numel(orders(:))),'k','LineWidth',2);
     yl = ylim();
     ylim([min(yl(1),0.1),max(yl(2),10)]);
 
@@ -39,6 +39,6 @@ function plot_online(plot_path,name,orders,data,labels,compact)
     if not(compact)
 
         legend([labels;''],'location','SouthOutside');
-        print(fig,'-depsc',[plot_path,'/',name,'_online.eps']);
+        print(fig,'-depsc',[plot_path,filesep,name,'_online.eps']);
     end%if
 end

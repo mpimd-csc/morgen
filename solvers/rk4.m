@@ -1,6 +1,6 @@
 function solution = rk4(discrete,scenario,config)
 %%% project: morgen - Model Order Reduction for Gas and Energy Networks
-%%% version: 1.0 (2021-06-22)
+%%% version: 1.1 (2021-08-08)
 %%% authors: C. Himpe (0000-0003-2194-6754), S. Grundel (0000-0002-0209-6566)
 %%% license: BSD-2-Clause (opensource.org/licenses/BSD-2-clause)
 %%% summary: 4th order "classic" Runge Kutta method.
@@ -14,12 +14,14 @@ function solution = rk4(discrete,scenario,config)
 
     rtz = scenario.T0 * scenario.Rs * config.steady.z0;
 
-    % Caching: Reusable Pivoted LU decomposition
+    % Caching: Reusable pivoted LU decomposition
     if isempty(Rs) || ...
        not((T0 == scenario.T0) && (Rs == scenario.Rs)) || ...
        not(isdual == isfield(discrete,'dual')) || ...
        not(numel(EP) == discrete.nP + discrete.nQ)
 
+        Rs = scenario.Rs;
+        T0 = scenario.T0;
         isdual = isfield(discrete,'dual');
 
         [EL,EU,EP] = lu(discrete.E(rtz),'vector');
@@ -28,7 +30,7 @@ function solution = rk4(discrete,scenario,config)
     tID = tic;
 
     Fcp = discrete.F * scenario.cp;
-    fp = @(x,u) Fcp + discrete.A * x + discrete.B * u + discrete.f(config.steady.xs,x,u,rtz);
+    fp = @(x,u) Fcp + discrete.A * x + discrete.B * u + discrete.f(config.steady.as,config.steady.xs,x,scenario.us,u,rtz);
 
     t = 0:config.dt:scenario.tH;
     K = numel(t);
@@ -41,21 +43,23 @@ function solution = rk4(discrete,scenario,config)
     % Time stepper
     for k = 2:K
 
+        uk = scenario.ut(t(k));
+
         u(:,k) = u(:,k) + scenario.ut(t(k));
 
-        f1 = fp(xk,u(:,k));
+        f1 = fp(xk,uk);
         z1 = EU \ (EL \ f1(EP));
 
-        f2 = fp(xk + (config.dt/2.0) * z1,u(:,k));
+        f2 = fp(xk + config.dt * 0.5 * z1,uk);
         z2 = EU \ (EL \ f2(EP));
 
-        f3 = fp(xk + (config.dt/2.0) * z2,u(:,k));
+        f3 = fp(xk + config.dt * 0.5 * z2,uk);
         z3 = EU \ (EL \ f3(EP));
 
-        f4 = fp(xk + config.dt * z3,u(:,k));
+        f4 = fp(xk + config.dt * z3,uk);
         z4 = EU \ (EL \ f4(EP));
 
-        xk = (config.dt/6.0) * (z1 + 2.0 * z2 + 2.0 * z3 + z4);
+        xk = xk + (config.dt/6.0) * (z1 + 2.0 * z2 + 2.0 * z3 + z4);
 
         y(:,k) = y(:,k) + discrete.C * xk;
     end%for

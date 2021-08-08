@@ -1,5 +1,5 @@
 %%% project: morgen - Model Order Reduction for Gas and Energy Networks
-%%% version: 1.0 (2021-06-22)
+%%% version: 1.1 (2021-08-08)
 %%% authors: C. Himpe (0000-0003-2194-6754), S. Grundel (0000-0002-0209-6566)
 %%% license: BSD-2-Clause (opensource.org/licenses/BSD-2-clause)
 %%% summary: Basic demonstration of simulation and model reduction.
@@ -25,5 +25,5 @@ morgen('pipeline', ...   % Network
        }, ...            % Ad-hoc configuration:
         'dt=10', ...      % Use 10s time-steps
         'ord=50', ...     % Maximum reduced order 50 (computation and evaluation)
-        'compact');       % Make compact plot instead of individual
+        'compact');       % Make compact plot instead of individual plots
 

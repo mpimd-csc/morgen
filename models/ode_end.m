@@ -1,6 +1,6 @@
 function discrete = ode_end(network,config)
 %%% project: morgen - Model Order Reduction for Gas and Energy Networks
-%%% version: 1.0 (2021-06-22)
+%%% version: 1.1 (2021-08-08)
 %%% authors: C. Himpe (0000-0003-2194-6754), S. Grundel (0000-0002-0209-6566)
 %%% license: BSD-2-Clause (opensource.org/licenses/BSD-2-clause)
 %%% summary: Nonlinear implicit ODE endpoint model.
@@ -56,7 +56,7 @@ function discrete = ode_end(network,config)
 
 % Linear input matrix
 %
-%     /  0      B_D \
+%     /   0     B_D \
 % B = |             |
 %     \ B_S^T    0  /
 
@@ -74,7 +74,7 @@ function discrete = ode_end(network,config)
 
 % Output Matrix
 %
-%     /    0   -B_S \
+%     /   0    -B_S \
 % C = |             |
 %     \ B_D^T    0  /
 
@@ -83,25 +83,37 @@ function discrete = ode_end(network,config)
 
 % Nonlinear vector field
 %
-%     /                            0                             \
-% f = |                                                          |
-%     \ -D_G * (A_R^T p)  - D_F * D_Q^-1 * (q * |q| / (A_R^T p)) /
+%     /                            0                            \
+% f = |                                                         |
+%     \ -D_G * (A_R^T p) - D_F * D_Q^-1 * (q * |q| / (A_R^T p)) /
 
-    f_local = @(p,q) [zeros(discrete.nP, 1); ...
-                          -( d_g .* p + (d_q * d_f) .* F_k .* (q .* abs(q)) ./ p)];
+    switch config.gravity
 
-    discrete.f = @(xs,x,u,rtz) discrete.A * xs + f_local(p2q(xs(iP) + x(iP))./rtz,xs(iQ) + x(iQ));
+        case 'none'
+            f_local = @(ps,p,q) [zeros(discrete.nP, 1); ...
+                                 -F_k .* ((d_q * d_f) .* ((q .* abs(q)) ./ (ps + p)))];
+
+        case 'static'
+            f_local = @(ps,p,q) [zeros(discrete.nP, 1); ...
+                                 -F_k .* (d_g .* ps + (d_q * d_f) .* ((q .* abs(q)) ./ (ps + p)))];
+
+        case 'dynamic'
+            f_local = @(ps,p,q) [zeros(discrete.nP, 1); ...
+                                 -F_k .* (d_g .* (ps + p) + (d_q * d_f) .* ((q .* abs(q)) ./ (ps + p)))];
+    end%switch
+
+    discrete.f = @(as,xs,x,us,u,rtz) as + f_local(p2q(xs(iP))./rtz,p2q(x(iP))./rtz,xs(iQ) + x(iQ));
 
 % Local Jacobian
 %
-%         /   0                0   \
+%         /       0            0   \
 % J = A - |                        |
 %         \ df/dp + dg/dp    df/dq /
 
     J_local = @(p,q,rtz) discrete.A - [sparse(discrete.nP,discrete.nP + discrete.nQ); ...
-                                       spdiags( (d_q * d_f .* rtz) .* F_k .*  (q .* abs(q)) ./ p.^2 + d_g, 0, discrete.nQ, discrete.nQ) * p2q(1), ...
-                                       spdiags( (d_q * d_f .* rtz) .* F_k .* (2.0 * abs(q)) ./ p, 0, discrete.nQ, discrete.nQ) ];
+                                       spdiags( F_k .* ((d_q * d_f .* rtz) .*  (q .* abs(q)) ./ p.^2 + d_g), 0, discrete.nQ, discrete.nQ) * p2q(1), ...
+                                       spdiags( F_k .*  (d_q * d_f .* rtz) .* (2.0 * abs(q)) ./ p, 0, discrete.nQ, discrete.nQ) ];
 
-    discrete.J = @(xs,x,u,rtz) J_local(p2q(xs(iP) + x(iP)),xs(iQ) + x(iQ),rtz);
+    discrete.J = @(xs,x,us,rtz) J_local(p2q(xs(iP) + x(iP)),xs(iQ) + x(iQ),rtz);
 end
 
