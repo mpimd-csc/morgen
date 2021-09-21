@@ -80,6 +80,10 @@ To reproduce the experiments from the add-on paper,
 
 ## Usage
 
+### Main Function
+
+<details><summary markdown="span">(click to expand)</summary>
+
 The **morgen** platform is called via the `morgen.m` function:
 
 ```
@@ -128,7 +132,11 @@ If reduced order models are computed and tested:
 If only a simulation is run, `R` is a matrix,
 and contains the discrete output trajectory with dimensions outputs-times-time-steps.
 
+</details>
+
 ### Network
+
+<details><summary markdown="span">(click to expand)</summary>
 
 A network is described by a (directed) graph, given through an edgelist,
 which also specifies its edge type, and their physical dimensions and properties.
@@ -249,7 +257,11 @@ A parsed network `.net` file is given as a `network` structure with members:
   * `.nInternal`   (**scalar**) Number of internal nodes
   * `.nCompressor` (**scalar**) Number of compressors
 
+</details>
+
 ### Scenario
+
+<details><summary markdown="span">(click to expand)</summary>
 
 A scenario data set describes the boundary values and external inhomogeneities of the gas net.
 Transient behaviour of supply and demand functions is represented as step functions in compressed form by only marking changes.
@@ -281,7 +293,11 @@ A parsed network `.ini` file is given as:
   * `.ut`    (**handle**) Function handle with signature u_t = ut(t)
   * `.cp`    (**vector**) Compressor outlet pressures
 
+</details>
+
 ### Model
+
+<details><summary markdown="span">(click to expand)</summary>
 
 A model encodes a spatially discrete input-output system of the form:
 
@@ -334,7 +350,11 @@ and an (uni-directionally coupled algebraic) output equation.
 * Compressors can only be operated in discharge pressure control mode.
 * The argument `rtz` is the product `Rs*T0*z0` formed in the solver.
 
+</details>
+
 ### Solver
+
+<details><summary markdown="span">(click to expand)</summary>
 
 A solver is a time stepper that simulates a trajectory of a model and a scenario.
 The prerequisite steady-state initial value is computed from the scenario's boundary values.
@@ -399,7 +419,11 @@ These sparse system matrices are stored in a `.mat` file and named
 * To obtain a `(E,A,B,C)` system, the load vector `F` can be concatenated to the
   input matrix `B`, i.e.: `B' := [B, F]`, incrementing the number of inputs.
 
+</details>
+
 ### Reductors
+
+<details><summary markdown="span">(click to expand)</summary>
 
 A reductor computes a reduced order discrete model, aiming to approximate the
 input-output (boundary-quantity-of-interest) behavior.
@@ -445,7 +469,11 @@ a "linear" variant of the reductor, which assumes a dual system is available.
 While either method can be applied to both, `ode_mid` and `ode_end`, models,
 theory suggest to use the linear variant only with the port-Hamiltonian `ode_end`.
 
+</details>
+
 ### Tests
+
+<details><summary markdown="span">(click to expand)</summary>
 
 A test defines an experiment, which is implemented as a script whose filename
 consists of a prefix and the tested network's name. Two types of experiments are
@@ -498,7 +526,11 @@ measuring the area above the model reduction error graph, which is also plotted.
 This score jointly assesses the model reduction goals of minimum size and maximum accuracy.
 Unstable reduced order models are counted as evaluated with relative error of `1.0`.
 
+</details>
+
 ## Configuration
+
+<details><summary markdown="span">(click to expand)</summary>
 
 The **morgen** platform assumes a configuration [INI](https://en.wikipedia.org/wiki/INI_file)-file
 in the base folder named `morgen.ini`, if not found hard-coded default values
@@ -556,7 +588,7 @@ Internally, the configuration is stored in a structure of structures as follows:
   * `.mor`     (**struct**) Members: `.rom_max`, `.parametric`, `.solver`, `.excitation`, `.T0_min`, `.T0_max`, `.Rs_min`, `.Rs_max`, `.pgrid`
   * `.eval`    (**struct**) Members: `.parametric`, `.ptest`, `.T0_min`, `.T0_max`, `.Rs_min`, `.Rs_max`, `.skip`, `.max`, `.pnorm`
 
-## Temperature Units
+### Temperature Units
 
 All input temperatures, i.e., in:
 
@@ -566,7 +598,11 @@ All input temperatures, i.e., in:
 and all output temperatures are in **Celsius**.
 Internally, all temperatures are in **Kelvin**.
 
+</details>
+
 ## Tools
+
+<details><summary markdown="span">(click to expand)</summary>
 
 * `xml2net.xsl`    Converts [gaslib](https://gaslib.zib.de) `.net` XML network definitions into **MORGEN**-compatible `.net` CSV network definitions via XSLTproc:
 ```
@@ -600,6 +636,8 @@ cmp_friction(Re,D,k)
 ```
 cmp_compressibility(p,T,pc,Tc)
 ```
+
+</details>
 
 ## Notes
 
@@ -686,6 +724,7 @@ model-solver-reductor ensemble(s):
 * [Setup]    `ADD` list all scenarios per network in `SETUP`
 * [Setup]    `ADD` graphical user interface launcher
 * [Octave]   `FIX` slow `ode23s`
+* [Docu]     `ADD` number of compressors in network list
 
 ### 2.0
 
