@@ -4,8 +4,8 @@
 %%% license: BSD-2-Clause (opensource.org/licenses/BSD-2-clause)
 %%% summary: Test MORGEN network.
 
-for s = {'imex1'}%,'imex2'}
-    for m = {{'ode_end','_l'}}%{{'ode_mid',''},{'ode_end',''},{'ode_end','_l'}}
+for s = {'imex1','imex2'}
+    for m = {{'ode_mid',''},{'ode_end',''},{'ode_end','_l'}}
 
         if strcmp(m{1}{2},'_l'), plotid = 'lin'; else, plotid = 'non'; end%if
 %
