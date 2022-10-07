@@ -1,13 +1,13 @@
 function [proj,name] = ebg_ro(solver,discrete,scenario,config)
 %%% project: morgen - Model Order Reduction for Gas and Energy Networks
-%%% version: 1.1 (2021-08-08)
+%%% version: 1.2 (2022-10-07)
 %%% authors: C. Himpe (0000-0003-2194-6754), S. Grundel (0000-0002-0209-6566)
 %%% license: BSD-2-Clause (opensource.org/licenses/BSD-2-clause)
 %%% summary: Structured nonlinear empirical balanced gains.
 
     global ODE;
 
-    name = 'Struct. Empirical Balanced Gains (WR + WO)';
+    name = 'Empirical Balanced Gains RO';
 
     logger('head',name);
 
@@ -24,7 +24,7 @@ function [proj,name] = ebg_ro(solver,discrete,scenario,config)
                                  config.solver).y;
 
     % Empirical reachability Gramian
-    WR = emgr(@() 0,@() 1,sysdim,timedisc,'c',config.samples,flags,config.excitation);
+    WR = emgr(@() 0,@() 1,sysdim,timedisc,'c',config.samples,flags,config.excitation,[],[],0.01*scenario.us);
 
     % Specialize output solver
     ODE = @(f,g,t,x0,u,p) solver(setfields(discrete,'x0',x0), ...

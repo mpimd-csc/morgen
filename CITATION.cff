@@ -8,10 +8,10 @@ authors:
     given-names: Sara
     orcid: https://orcid.org/0000-0002-0209-6566
 title: "morgen - Model Order Reduction for Gas and Energy Networks"
-doi: 10.1186/s13362-021-00109-4
+doi: 10.5281/zenodo.7157808
 url: https://git.io/morgen
-version: 1.1
-date-released: 2021-08-08
+version: 1.2
+date-released: 2022-10-07
 preferred-citation:
   type: article
   authors:

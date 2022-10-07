@@ -1,6 +1,6 @@
 function solution = generic(discrete,scenario,config)
 %%% project: morgen - Model Order Reduction for Gas and Energy Networks
-%%% version: 1.1 (2021-08-08)
+%%% version: 1.2 (2022-10-07)
 %%% authors: C. Himpe (0000-0003-2194-6754), S. Grundel (0000-0002-0209-6566)
 %%% license: BSD-2-Clause (opensource.org/licenses/BSD-2-clause)
 %%% summary: Adaptive 2nd order Rosenbrock solver.
@@ -20,8 +20,8 @@ function solution = generic(discrete,scenario,config)
                   'InitialStep', config.dt, ...				% Set initial time step
                   'Jacobian', discrete.J(config.steady.xs,discrete.x0,scenario.us,rtz));	% Set Jacobian
 
-    [K,x] = ode23s(@(t,x) discrete.A * x + discrete.B * scenario.ut(t) + Fcp ...
-                          + discrete.f(config.steady.as,config.steady.xs,x,scenario.us,scenario.ut(t),rtz), ...
+    [K,x] = ode23s(@(t,x) discrete.A * x + discrete.B * (scenario.us + scenario.ut(t)) + Fcp ...
+                          + discrete.f(config.steady.xs,x,scenario.us,scenario.ut(t),rtz), ...
                    [0,scenario.tH], discrete.x0, opts);
 
     % Compute input trajectory

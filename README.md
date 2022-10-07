@@ -1,9 +1,13 @@
-![morgen logo](morgen.png) morgen -- Model Order Reduction for Gas and Energy Networks (1.1)
-============================================================================================
+![morgen logo](morgen.png) morgen - Model Order Reduction for Gas and Energy Networks (1.2)
+===========================================================================================
 
 **morgen** is an open-source MATLAB and OCTAVE test platform to compare models,
 solvers, and model reduction methods (reductors) for gas networks and other
 energy network systems that are based on the (isothermal) Euler equations.
+
+## Version
+
+Current Version: [morgen 1.2](https://doi.org/10.5281/zenodo.7157808) (2022-10-07)
 
 ## Compatibility
 
@@ -12,12 +16,12 @@ energy network systems that are based on the (isothermal) Euler equations.
 
 ## Dependencies
 
-* [emgr](https://gramian.de) == 5.9 (included, see `reductors/private`)
+* [emgr](https://gramian.de) == 5.99 (included, see `reductors/private`)
 
 ## License
 
 **morgen** is licensed under the [BSD-2-Clause](https://opensource.org/licenses/BSD-2-Clause) license,
-with copyright (c) 2020--2021: _Christian Himpe_, _Sara Grundel_; see [LICENSE](LICENSE).
+with copyright (c) 2020--2022: _Christian Himpe_, _Sara Grundel_; see [LICENSE](LICENSE).
 
 ## Disclaimer
 
@@ -36,19 +40,17 @@ You can link to **morgen** via: [git.io/morgen](https://git.io/morgen)
 
 ## Getting Started
 
-To try **morgen**:
-
-```
-> DEMO  % runs a sample pipeline model reduction code
-```
-
-To setup simulation and reduction tests:
+To setup simulation and reduction tests and demos:
 
 ```
 > SETUP % adds the "tests" folder to the path and lists scripts
 ```
 
-Tests can then be called directly as listed.
+Tests can then be called directly as listed. To try **morgen**:
+
+```
+> DEMO  % runs a sample pipeline model reduction code
+```
 
 ### Reproducibility
 
@@ -59,11 +61,18 @@ To reproduce the experiments from the companion paper,
 > RUNME_HimpeGB21
 ```
 
-To reproduce the experiments from the add-on paper,
+To reproduce the experiments from the first add-on paper,
 **Next-Gen Gas Network Simulation**, run:
 
 ```
-> RUNME_HimpeGB21a
+> RUNME_HimpeGB22
+```
+
+To reproduce the experiments from the second add-on paper,
+**System Order Reduction for Gas and Energy Networks**, run:
+
+```
+> RUNME_HimpeG22
 ```
 
 ### Extending **morgen**
@@ -99,7 +108,7 @@ and has four mandatory arguments:
 
 as well as an optional argument and an additional variable length argument list:
 
-* `reductor_ids` (**cell**)  An array of reductor identifiers (can be empty, too)
+* `reductor_ids` (**cell**) An array of reductor identifiers (can be empty, too)
 * `varargin`     Variable argument list each containing a string (see below)
 
 All admissible additional (**string**) arguments are described below:
@@ -124,7 +133,7 @@ If reduced order models are computed and tested:
 * `.reductors` (**cell**) Array of strings with names of the reductors
 * `.orders`    (**vector**) The tested reduced orders
 * `.l0error` , `.l1error` , `.l2error` , `.l8error` (**cell**) Arrays of per reduced order average errors
-* `.l0score` , `.l1score` , `.l2score` , `.l8score` (**cell**) Arrays of per reduced order average [MORscores](https://doi.org/10.1007/978-3-030-72983-7_7)
+* `.l0score` , `.l1score` , `.l2score` , `.l8score` (**cell**) Arrays of per reduced order average [MORscore](https://doi.org/10.1007/978-3-030-72983-7_7)s
 * `.offline`   (**cell**) Array of offline times for the reductors
 * `.online`    (**cell**) Array of average relative online times for the reductors
 * `.breven`    (**cell**) Array of average relative offline/online break even numbers
@@ -159,49 +168,50 @@ All available network datasets are listed with the network's number of
 * supply boundary nodes (`nS`), and
 * demand boundary nodes (`nD`).
 
-##### Toy Networks
+##### Test Networks
 
-* `diamond`  - Diamond Network     (`n0=8, nS=1, nD=1`)
-* `fork1`    - Forked Pipeline     (`n0=12, nS=1, nD=2`)
-* `fork2`    - Forked Pipeline     (`n0=12, nS=2, nD=1`)
-* `comptest` - Compressor Test     (`n0=1, nS=1, nD=1`)
-* `paratest` - Parallel Pipes Test (`n0=2, nS=1, nD=1`)
-* `PamBD16`  - Triangle Network    (`n0=0, nS=1, nD=2`)
+* `diamond`  - Diamond Network     (`n0=8, nS=1, nD=1, nC=0`)
+* `fork1`    - Forked Pipeline     (`n0=12, nS=1, nD=2, nC=0`)
+* `fork2`    - Forked Pipeline     (`n0=12, nS=2, nD=1, nC=0`)
+* `comptest` - Compressor Test     (`n0=1, nS=1, nD=1, nC=1`)
+* `paratest` - Parallel Pipes Test (`n0=2, nS=1, nD=1, nC=0`)
+* `PamDB16`  - Triangle Network    (`n0=0, nS=1, nD=2, nC=0`)
 
 ##### Synthetic Networks
 
-* `MORGEN`      - Small Network  (`n0=27, nS=2, nD=4`)
-* `AzeJ07`      - Small Network  (`n0=5, nS=1, nD=2`)
-* `GruHKetal13` - Small Network  (`n0=11, nS=1, nD=8`)
-* `Kiu94`       - Small Network  (`n0=8, nS=1, nD=14`)
-* `GruJHetal14` - Medium Network (`n0=45, nS=4, nD=2`)
-* `GasLib11`    - Medium Network (`n0=6, nS=3, nD=3`)
-* `GasLib24`    - Medium Network (`n0=14, nS=3, nD=5`)
-* `GasLib40`    - Medium Network (`n0=40, nS=3, nD=29`)
-* `GasLib135`   - Medium Network (`n0=135, nS=3, nD=45`)
-* `PelLL17a`    - Medium Network (`n0=41, nS=1, nD=15`)
+* `MORGEN`      - Small Network  (`n0=27, nS=2, nD=4, nC=1`)
+* `AzeJ07`      - Small Network  (`n0=5, nS=1, nD=2, nC=1`)
+* `GruHKetal13` - Small Network  (`n0=11, nS=1, nD=8, nC=0`)
+* `Kiu94`       - Small Network  (`n0=8, nS=1, nD=14, nC=0`)
+* `GruJHetal14` - Medium Network (`n0=45, nS=4, nD=2, nC=0`)
+* `GasLib11`    - Medium Network (`n0=6, nS=3, nD=3, nC=2`)
+* `GasLib24`    - Medium Network (`n0=14, nS=3, nD=5, nC=3`)
+* `GasLib40`    - Medium Network (`n0=40, nS=3, nD=29, nC=6`)
+* `GasLib135`   - Medium Network (`n0=135, nS=3, nD=45, nC=29`)
+* `PelLL17a`    - Medium Network (`n0=41, nS=1, nD=15, nC=5`)
 
 ##### Pipelines
 
-* `pipeline` - Pipeline (`n0=0, nS=1, nD=1`)
-* `Cha09`    - Pipeline (`n0=0, nS=1, nD=1`)
-* `RodS18`   - Tree     (`n0=6, nS=1, nD=4`)
-* `Guy67`    - Tree     (`n0=8, nS=1, nD=8`)
-* `LotH67a`  - Pipeline (`n0=0, nS=1, nD=1`)
-* `LotH67b`  - Pipeline (`n0=0, nS=1, nD=1`)
-* `LotH67c`  - Tree     (`n0=6, nS=2, nD=2`)
-* `LotH67d`  - Tree     (`n0=4, nS=2, nD=2`)
+* `pipeline` - Pipeline (`n0=0, nS=1, nD=1, nC=0`)
+* `Cha09`    - Pipeline (`n0=0, nS=1, nD=1, nC=0`)
+* `RodS18`   - Tree     (`n0=6, nS=1, nD=4, nC=0`)
+* `Guy67`    - Tree     (`n0=8, nS=1, nD=8, nC=0`)
+* `LotH67a`  - Pipeline (`n0=0, nS=1, nD=1, nC=0`)
+* `LotH67b`  - Pipeline (`n0=0, nS=1, nD=1, nC=0`)
+* `LotH67c`  - Tree     (`n0=6, nS=2, nD=2, nC=2`)
+* `LotH67d`  - Tree     (`n0=4, nS=2, nD=2, nC=1`)
 
 ##### Realistic Networks
 
-* `AzePA19`     - Portugal (`n0=0, nS=1, nD=1`)
-* `BerS19`      - Spain    (`n0=6, nS=1, nD=5`)
-* `DeWS00`      - Belgium  (`n0=20, nS=6, nD=9`)
-* `EkhDLetal19` - Ireland  (`n0=26, nS=3, nD=10`)
-* `GasLib134`   - Greece   (`n0=134, nS=3, nD=45`)
-* `GasLib582`   - Germany  (`n0=582, nS=31, nD=129`)
-* `GasLib4197`  - Germany  (`n0=4197, nS=11, nD=1009`)
-* `SciGrid_NO`  - Norway   (`n0=44, nS=11, nD=9`)
+* `AzePA19`     - Portugal (`n0=0, nS=1, nD=1, nC=0`)
+* `BerS19`      - Spain    (`n0=6, nS=1, nD=5, nC=0`)
+* `DeWS00`      - Belgium  (`n0=20, nS=6, nD=9, nC=0`)
+* `EkhDLetal19` - Ireland  (`n0=26, nS=3, nD=10, nC=0`)
+* `GasLib134`   - Greece   (`n0=134, nS=3, nD=45, nC=1`)
+* `GasLib582`   - Germany  (`n0=582, nS=31, nD=129, nC=5`)
+* `GasLib4197`  - Germany  (`n0=4197, nS=11, nD=1009, nC=12`)
+* `SciGrid_NO`  - Norway   (`n0=44, nS=11, nD=9, nC=0`)
+* `JinW`        - China    (`n0=45, nS=5, nD=3, nC=38`)
 
 #### Data Origin
 
@@ -213,6 +223,14 @@ T. Koch, D. Oucherif, M.E. Pfetsch, L. Schewe, R. Schwarz, M. Sirvent:
 Data 2(4): 40, 2017.
 
 and licensed under **CC-BY 3.0**, see: https://gaslib.zib.de
+
+The SciGrid network data-sets are derived from:
+
+J. Dasenbrock, J. Diettrich, A. Pluta, W. Medjroubi:
+**SciGRID_gas NO_Raw**;
+Zenodo: 10.5281/zenodo.3985268, 2020.
+
+and licensed under **CC-BY 4.0**, see: https://www.gas.scigrid.de
 
 #### File Format
 
@@ -287,7 +305,7 @@ A parsed network `.ini` file is given as:
 
 * `scenario` (**struct**)
   * `.T0`    (**scalar**) Global mean temperature
-  * `.Rs`    (**scalar**) Global mean 
+  * `.Rs`    (**scalar**) Global mean specific gas constant
   * `.tH`    (**scalar**) Time horizon
   * `.us`    (**vector**) Steady-state input
   * `.ut`    (**handle**) Function handle with signature u_t = ut(t)
@@ -325,13 +343,13 @@ and an (uni-directionally coupled algebraic) output equation.
   * `.nP`     (**scalar**) Number of pressure states
   * `.nQ`     (**scalar**) Number of mass-flux states
   * `.nPorts` (**scalar**) Number of ports
-  * `.E`      (**handle**) Mass matrix function handle Ertz = E(rtz)
+  * `.E`      (**handle**) Mass matrix function handle `E_rtz = E(rtz)`
   * `.A`      (**matrix**) System matrix
   * `.B`      (**matrix**) Input matrix (models boundary nodes)
   * `.F`      (**matrix**) Source matrix (models the compressor action)
   * `.C`      (**matrix**) Output matrix (sensors at boundary nodes)
-  * `.f`      (**handle**) Nonlinear vector field x = f(as,xs,x,us,u,rtz)
-  * `.J`      (**handle**) Jacobian x = J(xs,x,u,rtz)
+  * `.f`      (**handle**) Nonlinear vector field `x = f(xs,x,us,u,rtz)`
+  * `.J`      (**handle**) Jacobian `x = J(xs,x,u,rtz)`
   * `.dual`    (**bool**)  This is only a member (of any value) if it is a dual model!
 
 #### Available Models
@@ -342,7 +360,6 @@ and an (uni-directionally coupled algebraic) output equation.
 #### Notes
 
 * The argument `xs` is the steady state computed in the solver (wrapper).
-* The argument `as` is the system matrix applied to the steady state: `discrete.A * xs`.
 * The argument `x` in nonlinearity `f` and Jacobian `J` refers to the difference to the steady-state.
   This means `xs + x` yields the actual state.
 * Only the components `E`, `f` and `J` are parametrized.
@@ -383,14 +400,15 @@ The prerequisite steady-state initial value is computed from the scenario's boun
 
 #### Available Solvers
 
-* `generic`    - Second-order implicit adaptive `ode23s` Rosenbrock solver
 * `imex1`      - First-order implicit-explicit solver
 * `imex2`      - Second-order implicit-explicit Runge-Kutta solver
+* `cnab2`      - Second-order Crank-Nicolson-Adams-Bashforth solver
 * `rk4`        - Fourth-order "classic" explicit Runge-Kutta solver (unstable, use only for testing)
-* `rk2hyp`     - Second-order explicit Runge-Kutta solver (increased stability)
-* `rk4hyp`     - Fourth-order explicit Runge-Kutta solver (increased stability)
+* `rk2hyp`     - Second-order explicit Runge-Kutta solver (increased hyperbolic stability)
+* `rk4hyp`     - Fourth-order explicit Runge-Kutta solver (increased hyperbolic stability)
+* `generic`    - Second-order implicit adaptive `ode23s` Rosenbrock solver
 
-* `linear_export` - Linearize and export state-space model (wraps `imex1`)
+* `linear_export` - Linearize and export state-space model (wraps `imex1` solver)
 
 #### Model Export
 
@@ -441,7 +459,7 @@ input-output (boundary-quantity-of-interest) behavior.
 
 #### Returns
 
-* `proj`  (**cell**)  Array of projectors `{LP,RP;LQ,RQ}` (Petrov Galerkin) or `{LP;LQ}` (Galerkin)
+* `proj`  (**cell**)  Array of projectors `{LP,RP;LQ,RQ}` (Bi-Orthogonal / Oblique) or `{LP;LQ}` (Orthogonal)
 * `name` (**string**) Detailed name of reductor
 
 #### Available Reductors
@@ -453,6 +471,9 @@ separately ("Structured" is abbreviated as "Struct."):
 * `eds_ro` / `eds_ro_l`   _Struct. Empirical Dominant Subspaces_
 * `eds_wx` / `eds_wx_l`   _Struct. Empirical Cross-Gramian-Based Dominant Subspaces_
 * `eds_wz` / `eds_wz_l`   _Struct. Empirical Non-Symmetric-Cross-Gramian-Based Dominant Subspaces_
+* `mpod_ro` / `mpod_ro_l` _Struct. Modified Proper Orthogonal Decomposition_
+* `mpod_wx` / `mpod_wx_l` _Struct. Modified Proper Orthogonal Decomposition_
+* `mpod_wz` / `mpod_wz_l` _Struct. Modified Proper Orthogonal Decomposition_
 * `bpod_ro` / `bpod_ro_l` _Struct. Empirical Balanced Proper Orthogonal Decomposition_
 * `ebt_ro` / `ebt_ro_l`   _Struct. Empirical Balanced Truncation_
 * `ebt_wx` / `ebt_wx_l`   _Struct. Empirical Cross-Gramian-Based Balanced Truncation_
@@ -557,7 +578,9 @@ are used.
 * `steady_pc`          (**Float**) Critical pressure in Bar, default: `45.988`
 * `steady_pn`          (**Float**) Normal pressure in Bar, default: `1.01325`
 
-* `solver_relax` (**Float in (0,1]**) IMEX solver relaxation, default: `1.0`
+* `solver_relax`   (**Float in (0,1]**) IMEX solver relaxation, default: `1.0`
+* `solver_rk2type` (**Positive Integer**) Number of 2nd order hyperbolic Runge-Kutta stages `5`, `6`, `7`, `8`, `9`, `10`, `11`, `12`, default: `11`
+* `solver_rk4type` (**String**) 4th order hyperbolic Runge-Kutta type `MeaR99a`, `MeaR99b`, `TseS05`, default: `MeaR99a`
 
 * `T0_min` (**Float**) Minimum ambient temperature in Celsius, default: `0.0`
 * `T0_max` (**Float**) Maximum ambient temperature in Celsius, default: `20.0`
@@ -582,11 +605,11 @@ Internally, the configuration is stored in a structure of structures as follows:
 
 * `config`     (**struct**)
   * `.network` (**struct**) Members: `.dt`, `.vmax`, `.cfl`
-  * `.model`   (**struct**) Members: `.reynolds`, `.friction`
+  * `.model`   (**struct**) Members: `.tuning`, `.reynolds`, `.friction`, `.gravity`
   * `.steady`  (**struct**) Members: `.dt`, `.maxiter_lin`, `.maxiter_non`, `.maxerror`, `.Tc`, `.pc`, `.pn`, `.compressibility`
-  * `.solver`  (**struct**) Members: `.dt`, `.relax`
+  * `.solver`  (**struct**) Members: `.dt`, `.relax`, `.rk2type`, `.rk4type`
   * `.mor`     (**struct**) Members: `.rom_max`, `.parametric`, `.solver`, `.excitation`, `.T0_min`, `.T0_max`, `.Rs_min`, `.Rs_max`, `.pgrid`
-  * `.eval`    (**struct**) Members: `.parametric`, `.ptest`, `.T0_min`, `.T0_max`, `.Rs_min`, `.Rs_max`, `.skip`, `.max`, `.pnorm`
+  * `.eval`    (**struct**) Members: `.parametric`, `.ptest`, `.T0_min`, `.T0_max`, `.Rs_min`, `.Rs_max`, `.skip`, `.max`, `.pnorm`, `.gain`
 
 ### Temperature Units
 
@@ -644,41 +667,59 @@ cmp_compressibility(p,T,pc,Tc)
 Based on numerous numerical experiments we _currently_ recommend the following
 model-solver-reductor ensemble(s):
 
-* Model:    `ode_end`
-* Solver:   `imex1`
-* Reductor: `eds_ro_l`
+* Model:    `ode_end` (Port-Hamiltonian Endpoint Discretization)
+* Solver:   `imex1` (First-Order Implicit-Explicit)
+* Reductor: `eds_ro_l` (Structured Linear Empirical Dominant Subspaces)
 
 ## Log
+
+* 1.2 (2022-10-07): [doi:10.5281/zenodo.7157808](https://doi.org/10.5281/zenodo.7157808)
+  * `ADDED`    Modified POD `mpod` reductor in six variants
+  * `ADDED`    configurable number of stages for `rk2hyp` solver
+  * `ADDED`    configurable coefficient sets for `rk4hyp` solver
+  * `ADDED`    Crank-Nicolson/Adams-Bashforth `cnab2` solver
+  * `ADDED`    total elapsed time
+  * `ADDED`    MORscore horizontal bar plot
+  * `ADDED`    optional argument `cfl`
+  * `ADDED`    networks and tests
+  * `FIXED`    `randscen` tool
+  * `IMPROVED` formulation of model nonlinearities
+  * `IMPROVED` model reduction backend `emgr` via 5.99 update
+  * `IMPROVED` memory footprint of `rk2hyp` solver
+  * `IMPROVED` steady-state extra steps
+  * `IMPROVED` plot labels and legends
+  * `CHANGED`  reductor full names
 
 * 1.1 (2021-08-08): [doi:10.5281/zenodo.5168949](https://doi.org/10.5281/zenodo.5168949)
   * `ADDED`    optional static gravity term
   * `ADDED`    optional gain correction
-  * `ADDED`    explicit rk2 solver with increased stability
-  * `ADDED`    explicit rk4 solver with increased stability
+  * `ADDED`    explicit RK2 solver `rk2hyp` with increased stability
+  * `ADDED`    explicit RK4 solver `rk4hyp` with increased stability
   * `ADDED`    linearized model export pseudo-solver
+  * `ADDED`    networks and tests
   * `CHANGED`  nonlinear vector field model-interface
   * `IMPROVED` ROM test logging
   * `IMPROVED` steady state solver stopping criteria
   * `IMPROVED` plot presentation
   * `FIXED`    generic path separators
   * `FIXED`    solver caching
-  * `FIXED`    rk4 solver
+  * `FIXED`    `rk4` solver
   * `FIXED`    compact plot labels
 
 * 1.0 (2021-06-22): [doi:10.5281/zenodo.5012357](https://doi.org/10.5281/zenodo.5012357)
   * `ADDED`    configurable CFL constant
-  * `ADDED`    networks and tests
-  * `ADDED`    psi2bar converter tool
+  * `ADDED`    `psi2bar` converter tool
   * `ADDED`    tunable efficiency factor
+  * `ADDED`    networks and tests
   * `IMPROVED` steady-state interface
   * `IMPROVED` model-solver interface
   * `IMPROVED` reductor interface
-  * `IMPROVED` rk4 solver
+  * `IMPROVED` `rk4` solver
   * `IMPROVED` logging
-  * `IMPROVED` vf2kgs tool
+  * `IMPROVED` `vf2kgs` tool
 
 * 0.99 (2021-04-12): [doi:10.5281/zenodo.4680265](https://doi.org/10.5281/zenodo.4680265)
-  * `ADDED`    gopod reductor
+  * `ADDED`    `gopod_r` reductor
   * `ADDED`    linear reductor variants
   * `ADDED`    SciGRID_gas CSV converter
   * `ADDED`    DEMO code
@@ -689,60 +730,52 @@ model-solver-reductor ensemble(s):
 
 ## References
 
+* C. Himpe, S. Grundel: **System Order Reduction for Gas and Energy Networks**;
+  in: Proceedings in Applied Mathematics and Mechanics: Submitted, 2022.
+  * See also the references listed herein.
+
+* C. Himpe, S. Grundel, P. Benner: **Next-Gen Gas Network Simulation**;
+  in: Progress in Industrial Mathematics at ECMI 2021: Accepted, 2022.
+  * See also the references listed herein.
+
 * C. Himpe, S. Grundel, P. Benner: **Model Order Reduction for Gas and Energy Networks**;
   Journal of Mathematics in Industry 11: 13, 2021.
   [doi:10.1186/s13362-021-00109-4](https://doi.org/10.1186/s13362-021-00109-4)
-  * See also the references listed therein.
-
-* C. Himpe, S. Grundel, P. Benner: **Next-Gen Gas Network Simulation**;
-  arXiv (math.OC): 2108.02651, 2021.
-  [arxiv:2108.02651](https://arxiv.org/abs/2108.02651)
+  * See also the references listed herein.
 
 * P. Benner, S. Grundel, C. Himpe, C. Huck, T. Streubel, C. Tischendorf: **Gas Network Benchmark Models**;
   in: Applications of Differential-Algebraic Equations: Examples and Benchmarks: 171--197, 2019.
   [doi:10.1007/11221_2018_5](https://doi.org/10.1007/11221_2018_5)
 
 * C. Himpe: **Comparing (Empirical-Gramian-Based) Model Order Reduction Algorithms**;
-  in: Model Reduction of Complex Dynamical Systems: 2021.
+  in: Model Reduction of Complex Dynamical Systems: 141--164, 2021.
   [doi:10.1007/978-3-030-72983-7_7](https://doi.org/10.1007/978-3-030-72983-7_7)
 
 * C. Himpe, S. Grundel, P. Benner: **Efficient Gas Network Simulations**;
-  in: German Success Stories in Industrial Mathematics: 2021.
-  [doi:10.1007/978-3-030-81455-7](https://doi.org/10.1007/978-3-030-81455-7)
+  in: German Success Stories in Industrial Mathematics: 17--22, 2022.
+  [doi:10.1007/978-3-030-81455-7_4](https://doi.org/10.1007/978-3-030-81455-7_4)
 
 * T. Clees, A. Baldin, P. Benner, S. Grundel, C. Himpe, B. Klaassen, F. Küsters, N. Marheineke,
   L. Nikitina, I. Nikitin, J. Pade, N. Stahl, C. Strohm, C. Tischendorf, A. Wirsen: **MathEnergy – Mathematical Key Technologies for Evolving Energy Grids**;
   in: Mathematical Modeling, Simulation and Optimization for Power Engineering and Management: 233--262, 2021.
   [doi:10.1007/978-3-030-62732-4_11](https://doi.org/10.1007/978-3-030-62732-4_11)
 
+For references see also: [GasMOR](https://www.mpi-magdeburg.mpg.de/4124328/gasmor)
+
 ## Roadmap
-
-### 1.2
-
-* [Main]     `ADD` print total time
-* [Plots]    `ADD` MORscore horizontal bar plot
-* [Setup]    `ADD` list all scenarios per network in `SETUP`
-* [Setup]    `ADD` graphical user interface launcher
-* [Octave]   `FIX` slow `ode23s`
-* [Docu]     `ADD` number of compressors in network list
 
 ### 2.0
 
 * [Model]    `ADD` variable supply-demand input-output boundaries
 * [Model]    `ADD` scenario valve handling
-* [Model]    `ADD` decouplers module
 * [Model]    `ADD` generic compressors as input-output combination
-* [Model]    `ADD` FVM model
-* [Model]    `ADD` DAE model
-* [Solver]   `ADD` DAE Euler solver
-* [Solver]   `ADD` co-simulation interface
 * [Reductor] `ADD` hyper-reductor module (DMD, DEIM, Q-DEIM, Numerical linearization)
-* [Reductor] `ADD` stabilization post-processing
+* [Octave]   `FIX` slow convergence of `ode23s` in generic solver
 * [Octave]   `FIX` incompatibilities in `format_network` (`textscan`)
 
 ## Development Guidelines
 
-* The main branch must complete cleared system tests successfully **!**
+* The main branch must complete reproducibility (`RUNME_xxx`) system tests successfully **!**
 * All source code headers must include: project, version, authors, license, summary **!**
 * Understand closures in [Matlab](https://research.wmz.ninja/articles/2017/05/closures-in-matlab.html) **!**
 * This project uses [Readme-Driven Development](https://tom.preston-werner.com/2010/08/23/readme-driven-development.html) **!**
@@ -751,4 +784,9 @@ model-solver-reductor ensemble(s):
 
 * Christian Himpe ([orcid:0000-0003-2194-6754](http://orcid.org/0000-0003-2194-6754))
 * Sara Grundel ([orcid:0000-0002-0209-6566](http://orcid.org/0000-0002-0209-6566))
+
+## Origin
+
+The `morgen` gas network simulation, testing and benchmarking platform was
+developed as part of the [MathEnergy](https://www.mathenergy.de) project.
 

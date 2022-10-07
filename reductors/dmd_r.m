@@ -1,13 +1,13 @@
 function [proj,name] = dmd_r(solver,discrete,scenario,config)
 %%% project: morgen - Model Order Reduction for Gas and Energy Networks
-%%% version: 1.1 (2021-08-08)
+%%% version: 1.2 (2022-10-07)
 %%% authors: C. Himpe (0000-0003-2194-6754), S. Grundel (0000-0002-0209-6566)
 %%% license: BSD-2-Clause (opensource.org/licenses/BSD-2-clause)
 %%% summary: Structured dynamic-mode-decomposition-Galerkin.
 
     global ODE;
 
-    name = 'Struct. Dynamic Mode Decomposition Galerkin (WR)';
+    name = 'Dynamic Mode Decomposition Galerkin';
 
     logger('head',name);
 
@@ -26,7 +26,7 @@ function [proj,name] = dmd_r(solver,discrete,scenario,config)
     dmd_kernel = @(x,y) blkdiag(dmd(x(iP,:)),dmd(x(iQ,:)));
 
     % Empirical reachability Gramian
-    WR = emgr(@() 0,@() 1,sysdim,timedisc,'c',config.samples,flags,config.excitation,[],[],[],[],dmd_kernel);
+    WR = emgr(@() 0,@() 1,sysdim,timedisc,'c',config.samples,flags,config.excitation,[],[],0.01*scenario.us,[],dmd_kernel);
 
     % Pressure projector
     [LP,~,~] = svds(WR(iP,iP),config.rom_max);

@@ -1,6 +1,6 @@
 function solution = rk4hyp(discrete,scenario,config)
 %%% project: morgen - Model Order Reduction for Gas and Energy Networks
-%%% version: 1.1 (2021-08-08)
+%%% version: 1.2 (2022-10-07)
 %%% authors: C. Himpe (0000-0003-2194-6754), S. Grundel (0000-0002-0209-6566)
 %%% license: BSD-2-Clause (opensource.org/licenses/BSD-2-clause)
 %%% summary: 4th order explicit Runge Kutta method with increased hyperbolic stability.
@@ -30,7 +30,7 @@ function solution = rk4hyp(discrete,scenario,config)
     tID = tic;
 
     Fcp = discrete.F * scenario.cp;
-    fp = @(x,u) Fcp + discrete.A * x + discrete.B * u + discrete.f(config.steady.as,config.steady.xs,x,scenario.us,u,rtz);
+    fp = @(x,u) Fcp + discrete.A * x + discrete.B * u + discrete.f(config.steady.xs,x,scenario.us,u,rtz);
 
     t = 0:config.dt:scenario.tH;
     K = numel(t);
@@ -40,36 +40,32 @@ function solution = rk4hyp(discrete,scenario,config)
     xk = discrete.x0;
     y(:,1) = y(:,1) + discrete.C * xk;
 
+    switch(config.rk4type)
+
+        case "MeaR99a", hrk = [0.0, 0.16791846623918, 0.48298439719700, 0.70546072965982, 0.09295870406537, 0.76210081248836; ...
+                               -0.15108370762927, 0.75384683913851, -0.36016595357907, 0.52696773139913, 0.0, 0.23043509067071];
+        case "MeaR99b", hrk = [0.0, 0.11323867464627, 0.38673801369281, 0.62314978336040, 0.05095678842127, 0.54193120548949; ...
+                               -1.11863930033618, 2.50614037113582, -2.22307558659639, 0.99978067105009, 0.0, 0.83579384474665];
+        case "TseS05",  hrk = [0.0, 0.14656005951358278141218736059705, 0.27191031708348360233615451628133, 0.06936819398523233741339353210366, 0.25897940086636139111948386831759, 0.48921096998463659243576995327396; ...
+                               -3.94810815871644627868730966001274, 6.15933360719925137209615595259797, -8.74466100703228369513719502355456, 4.07387757397683429863757134989527, 0.0, 3.45955798457264430309077738107406];
+    end%switch
+
     % Time stepper
     for k = 2:K
 
-        uk = scenario.ut(t(k));
+        u(:,k) = u(:,k) + scenario.ut(t(k));
 
-        u(:,k) = u(:,k) + uk;
+        q1 = 0.0;
+        q2 = 0.0;
 
-        f1 = fp(xk,uk);
-        z1 = EU \ (EL \ f1(EP));
+        for l = 1:6
 
-        f2 = fp(xk + config.dt * 0.16791846623918 * z1,uk);
-        z2 = EU \ (EL \ f2(EP));
+            q1 = fp(xk + (hrk(1,l) * config.dt) * q1,u(:,k));
+            q1 = EU \ (EL \ q1(EP));
+            q2 = q2 + hrk(2,l) * q1;
+        end%for
 
-        f3 = fp(xk + config.dt * 0.48298439719700 * z2,uk);
-        z3 = EU \ (EL \ f3(EP));
-
-        f4 = fp(xk + config.dt * 0.70546072965982 * z3,uk);
-        z4 = EU \ (EL \ f4(EP));
-
-        f5 = fp(xk + config.dt * 0.09295870406537 * z4,uk);
-        z5 = EU \ (EL \ f5(EP));
-
-        f6 = fp(xk + config.dt * 0.76210081248836 * z5,uk);
-        z6 = EU \ (EL \ f6(EP));
-
-        xk = xk + config.dt * (-0.15108370762927 * z1 ...
-                              + 0.75384683913851 * z2 ...
-                              - 0.36016595357907 * z3 ...
-                              + 0.52696773139913 * z4 ...
-                              + 0.23043509067071 * z6);
+        xk = xk + config.dt * q2;
 
         y(:,k) = y(:,k) + discrete.C * xk;
     end%for

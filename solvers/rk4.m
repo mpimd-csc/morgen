@@ -1,6 +1,6 @@
 function solution = rk4(discrete,scenario,config)
 %%% project: morgen - Model Order Reduction for Gas and Energy Networks
-%%% version: 1.1 (2021-08-08)
+%%% version: 1.2 (2022-10-07)
 %%% authors: C. Himpe (0000-0003-2194-6754), S. Grundel (0000-0002-0209-6566)
 %%% license: BSD-2-Clause (opensource.org/licenses/BSD-2-clause)
 %%% summary: 4th order "classic" Runge Kutta method.
@@ -30,7 +30,7 @@ function solution = rk4(discrete,scenario,config)
     tID = tic;
 
     Fcp = discrete.F * scenario.cp;
-    fp = @(x,u) Fcp + discrete.A * x + discrete.B * u + discrete.f(config.steady.as,config.steady.xs,x,scenario.us,u,rtz);
+    fp = @(x,u) Fcp + discrete.A * x + discrete.B * u + discrete.f(config.steady.xs,x,scenario.us,u,rtz);
 
     t = 0:config.dt:scenario.tH;
     K = numel(t);
@@ -43,23 +43,21 @@ function solution = rk4(discrete,scenario,config)
     % Time stepper
     for k = 2:K
 
-        uk = scenario.ut(t(k));
-
         u(:,k) = u(:,k) + scenario.ut(t(k));
 
-        f1 = fp(xk,uk);
-        z1 = EU \ (EL \ f1(EP));
+        f1 = fp(xk,u(:,k));
+        f1 = EU \ (EL \ f1(EP));
 
-        f2 = fp(xk + config.dt * 0.5 * z1,uk);
-        z2 = EU \ (EL \ f2(EP));
+        f2 = fp(xk + config.dt * 0.5 * f1,u(:,k));
+        f2 = EU \ (EL \ f2(EP));
 
-        f3 = fp(xk + config.dt * 0.5 * z2,uk);
-        z3 = EU \ (EL \ f3(EP));
+        f3 = fp(xk + config.dt * 0.5 * f2,u(:,k));
+        f3 = EU \ (EL \ f3(EP));
 
-        f4 = fp(xk + config.dt * z3,uk);
-        z4 = EU \ (EL \ f4(EP));
+        f4 = fp(xk + config.dt * f3,u(:,k));
+        f4 = EU \ (EL \ f4(EP));
 
-        xk = xk + (config.dt/6.0) * (z1 + 2.0 * z2 + 2.0 * z3 + z4);
+        xk = xk + (config.dt/6.0) * (f1 + 2.0 * f2 + 2.0 * f3 + f4);
 
         y(:,k) = y(:,k) + discrete.C * xk;
     end%for

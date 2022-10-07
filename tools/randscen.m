@@ -1,6 +1,6 @@
 function randscen(network,scenario_name)
 %%% project: morgen - Model Order Reduction for Gas and Energy Networks
-%%% version: 1.1 (2021-08-08)
+%%% version: 1.2 (2022-10-07)
 %%% authors: C. Himpe (0000-0003-2194-6754), S. Grundel (0000-0002-0209-6566)
 %%% license: BSD-2-Clause (opensource.org/licenses/BSD-2-clause)
 %%% summary: Generate random scenario from training scenario
@@ -17,7 +17,7 @@ function randscen(network,scenario_name)
 
     %% Write Random Scenario
 
-    f = fopen([scenario_name,'.ini'],'w');
+    f = fopen(['../networks/',network,'/',scenario_name,'.ini'],'w');
 
     fprintf(f,'T0 = %g\n',str2double(ini.T0));
     fprintf(f,'Rs = %g\n',str2double(ini.Rs));
@@ -26,12 +26,12 @@ function randscen(network,scenario_name)
     %% Compressor Pressures
 
     if isfield(ini,'cp')
-        compressor_pressure = cell2mat(cellfun(@(c) str2double(c),strsplit(ini.cp,'|'),'UniformOutput',false))';
+        compressor_pressure = cell2mat(cellfun(@(c) str2double(c),strsplit(ini.cp,';'),'UniformOutput',false))';
 
         fprintf(f,'cp = ');
         for l = 1:(numel(compressor_pressure) - 1)
 
-            fprintf(f,'%g|',compressor_pressure(l));
+            fprintf(f,'%g;',compressor_pressure(l));
         end%for
 
         fprintf(f,'%g\n',compressor_pressure(end));
@@ -39,8 +39,8 @@ function randscen(network,scenario_name)
 
     %% Supply Pressures
 
-    supply_pressure = cell2mat(cellfun(@(c) str2double(c),strsplit(ini.up,'|'),'UniformOutput',false))';
-   
+    supply_pressure = cell2mat(cellfun(@(c) str2double(c),strsplit(ini.up,';'),'UniformOutput',false))';
+
     fprintf(f,'up = ');
     for k = 1:24
 
@@ -61,9 +61,9 @@ function randscen(network,scenario_name)
 
     %% Demand Mass-Fluxes
 
-    demand_massflux = cell2mat(cellfun(@(c) str2double(c),strsplit(ini.uq,'|'),'UniformOutput',false))';
+    demand_massflux = cell2mat(cellfun(@(c) str2double(c),strsplit(ini.uq,';'),'UniformOutput',false));
 
-    rand_demand = [demand_massflux; demand_massflux .* (0.75 + 0.5*rand(23,numel(demand_massflux)))];
+    rand_demand = [demand_massflux; demand_massflux .* (0.5 + 0.75*rand(23,numel(demand_massflux)))];
 
     fprintf(f,'uq = ');
     for k = 1:24

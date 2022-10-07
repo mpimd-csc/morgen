@@ -1,10 +1,10 @@
 %%% project: morgen - Model Order Reduction for Gas and Energy Networks
-%%% version: 1.1 (2021-08-08)
+%%% version: 1.2 (2022-10-07)
 %%% authors: C. Himpe (0000-0003-2194-6754), S. Grundel (0000-0002-0209-6566)
 %%% license: BSD-2-Clause (opensource.org/licenses/BSD-2-clause)
 %%% summary: Test triangle network from PamDB16.
 
-for s = {'imex1','imex2'}
+for s = {'imex1','imex2','cnab2'}
     for m = {{'ode_mid',''},{'ode_end',''},{'ode_end','_l'}}
 
         if strcmp(m{1}{2},'_l'), plotid = 'lin'; else, plotid = 'non'; end%if

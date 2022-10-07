@@ -1,13 +1,13 @@
 function [proj,name] = ebt_wx_l(solver,discrete,scenario,config)
 %%% project: morgen - Model Order Reduction for Gas and Energy Networks
-%%% version: 1.1 (2021-08-08)
+%%% version: 1.2 (2022-10-07)
 %%% authors: C. Himpe (0000-0003-2194-6754), S. Grundel (0000-0002-0209-6566)
 %%% license: BSD-2-Clause (opensource.org/licenses/BSD-2-clause)
 %%% summary: Structured linear empirical cross-Gramian-based balanced truncation.
 
     global ODE;
 
-    name = 'Struct. Empirical Balanced Truncation (WX*)';
+    name = 'Empirical Balanced Truncation wx';
 
     logger('head',name);
 
@@ -25,7 +25,7 @@ function [proj,name] = ebt_wx_l(solver,discrete,scenario,config)
                                  config.solver).y;
 
     % Empirical linear cross Gramian
-    WX = emgr(@() 0,@() 1,sysdim,timedisc,'y',config.samples,flags,config.excitation);
+    WX = emgr(@() 0,@() 1,sysdim,timedisc,'y',config.samples,flags,config.excitation,[],[],0.01*scenario.us);
 
     % Pressure projector
     [LP,~,RP] = balro(WX(iP,iP),config.rom_max);

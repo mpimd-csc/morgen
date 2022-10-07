@@ -1,11 +1,11 @@
 %%% project: morgen - Model Order Reduction for Gas and Energy Networks
-%%% version: 1.1 (2021-08-08)
+%%% version: 1.2 (2022-10-07)
 %%% authors: C. Himpe (0000-0003-2194-6754), S. Grundel (0000-0002-0209-6566)
 %%% license: BSD-2-Clause (opensource.org/licenses/BSD-2-clause)
 %%% summary: Test MORGEN network.
 
-for s = {'imex1','imex2'}
-    for m = {{'ode_mid',''},{'ode_end',''},{'ode_end','_l'}}
+for s = {'imex1'}%,'imex2'}
+    for m = {{'ode_end','_l'}}%{{'ode_mid',''},{'ode_end',''},{'ode_end','_l'}}
 
         if strcmp(m{1}{2},'_l'), plotid = 'lin'; else, plotid = 'non'; end%if
 %
@@ -39,7 +39,7 @@ for s = {'imex1','imex2'}
                                             ['MORGEN--',m{1}{1},'--',s{:},'--ebg_wx',m{1}{2},'.rom'], ...
                                             ['MORGEN--',m{1}{1},'--',s{:},'--ebg_wz',m{1}{2},'.rom'], ...
                                             ['MORGEN--',m{1}{1},'--',s{:},'--dmd_r.rom'], ...
-                                           },'dt=60','ord=200','ys=-8',['pid=',plotid]);
+                                           },'dt=60','ord=200','ys=-9',['pid=',plotid]);
 %
     end%for
 end%for

@@ -1,0 +1,576 @@
+\documentclass[%
+aspectratio=43 % the default if ommited
+%aspectratio=169 %switches the page layout to 16:9 format
+,table % required for colored tables (passes the table option to xcolor)
+]{beamer}
+
+
+% [short title] the short title of the presentation is ignored by the new theme.
+\title{\texttt{morgen} (1.2)}
+% subtitle
+\subtitle{Model Order Reduction for Gas and Energy Networks}
+% [short author] author of the presentation
+% short author is shown in the footline on each frame
+\author{C.~Himpe, S.~Grundel} 
+% institute
+\institute{CSC}
+% date
+\date{}
+%\date{November 5, 2010}
+
+
+% beamertheme with options
+\mode<presentation>
+{
+  \usetheme[%
+  ,english            % change the language of logos and footline to english,
+                      % recommended
+  % The following add the corresponding group logo to the header. Note that the
+  % implementation does not check for multiple selections, but the standard only
+  % expects a single group to appear.
+  % ,ARB
+  % ,BPE
+   ,CSC
+  % ,DRI
+  % ,MSD
+  % ,NDS
+  % ,PCF
+  % ,PSD
+  % ,PSE
+  % ,SCT
+  % Choice of the title page layout:
+   ,layoutone             % Layout with fancy graphics and color gradient
+  % ,layouttwo            % Layout with blueish box (the default)
+  % ,layoutthree          % Layout with fancy title graphics of choice
+                          % use \pgfdeclareimage{title}{} to define it as below.
+  %,groupnameinhead        % Adds the full group name to the logo in the header
+  %,compacthead           % moves the subtitle below the frametitle in the head
+                          % instead of in the slide area
+  %,adjustframetitle      % automatically fit oversized frametitles horizontally
+  %,hideaffiliationheader % hides the word Affiliations: or Zugehörigkeiten: on
+                          % the title page
+  ,hidefundingheader     % hides the words "suppoted by" or "gefördert durch"
+                          % above the funding logos 
+   ,serifmath                % switch to serif math if desired
+  % ,ovgu                 % adds the OVGU Logo to the header if no group logo is
+                          % used. 
+  % ,noauthor             % switches off the display of the author's name in the
+                          % footline 
+  , titleinfoot           % show the short title in the footline
+  , movepagenums          % make the footline more symmetric in layout
+  % , hidepagenums        % do not print page numbers in footline
+  % ,navsymbols           % beamer navigation symbols are off by default and can
+                          % be activated using this option
+  % ,fullscreen            % try to display the PDF in fullscreen mode by default
+   ,singlepage            % try to display teh PDF in single page (rather than
+                          % continuous view) mode by default
+  % ,alertbold            % show alerted text in bold face (this option will
+                          % make \alert cause errors in math mode)
+  ]{mpi2015}            
+}
+
+
+% Definition of title page logo boxes. Both commands support an optional
+% argument for a fill/background color in case the logos get unreadable due to
+% transparency. 
+%
+% When defining your own logos make sure they are
+% .075\paperwidth high, e.g. by using 
+%  \includegraphics[height=.075\paperheight]{mylogo}
+
+
+% Partnerlogos for the titlepage: (comment for "none")
+%\cooplogos[white]{\ovgu}
+%\cooplogos{\ovgu}
+
+% Funding Agency and Project Cluster Logos (comment for "none")
+\fundinglogos{% Add spaces when using multiple logos
+  % \bmbf        % Federal Ministry for Education and Research
+  % \bmwi        % Federal Ministry for Economic Affairs and Energy
+  % \daad        % Deutscher Akademischer Austauschdienst
+  %  \dfg         % Deutsche Forschungsgemeinschaft
+  % \ecost       % European COST action
+  % \horizon     % Horizon 2020 programme
+  % \imprsproeng % IMPRS Production Engineering Magdeburg
+}
+
+% Define the graphics used on the title page in layout 1 & 3:
+\pgfdeclareimage[width=.6\linewidth,height=.45\linewidth]{title}{MPI_outside.jpg}
+
+\usepackage{stackengine}
+\usepackage{graphbox}
+\newcommand{\me}{\includegraphics[align=c,height=1.15em]{mathenergy.pdf}~}
+
+\begin{document}
+% title page
+\maketitle % use maketitle to make the title frame
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}\frametitle{Get \texttt{morgen}}
+
+\begin{center}\Huge
+ \alert{\url{https://git.io/morgen}}
+\end{center}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}\frametitle{The Name \texttt{morgen}}
+
+\LARGE
+
+\texttt{morgen} {\large(german for: tomorrow)}
+\setlength{\leftmargini}{3.5em}
+\begin{itemize}
+
+ \item \textbf{M}odel
+
+ \item \textbf{O}rder
+
+ \item \textbf{R}eduction
+
+ \item[for] \textbf{G}as
+
+ \item[and] \textbf{E}nergy
+
+ \item \textbf{N}etworks
+
+\end{itemize}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}\frametitle{Why \texttt{morgen}}
+
+\Large
+
+\begin{itemize}
+
+ \item Testing model-solver-reductor combinations
+
+ \item Comparing models, solvers, or reductors
+
+ \item Benchmarking reductors
+
+ \item Prototyping algorithms
+
+ \item Uncertainty quantification
+
+\end{itemize}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}\frametitle{About \texttt{morgen}}
+
+\Large
+
+\begin{itemize}
+
+ \item Open-source {\normalsize (BSD-2-Clause)}
+
+ \item High-Level {\normalsize (MATLAB and OCTAVE)}
+
+ \item Modular {\normalsize (Six modules)}
+
+ \item Configurable {\normalsize (Three-level configuration)}
+
+ \item Extensible {\normalsize (Contributions welcome)}
+
+\end{itemize}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}\frametitle{\texttt{morgen} Modules}
+
+\Large
+
+\begin{enumerate}
+
+ \item Models {\normalsize (Discretizations)}
+
+ \item Solvers {\normalsize (Integrators)}
+
+ \item Reductors {\normalsize (Model Reduction Algorithms)}
+
+ \item Networks {\normalsize (Topologies \& Scenarios)}
+
+ \item Tests {\normalsize (Simulation and Model Reduction Experiments)}
+
+ \item Tools {\normalsize (Unit and Format Converters)}
+
+\end{enumerate}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}\frametitle{Models}
+
+\large
+
+\textbf{Implemented:}
+\begin{itemize}\itemsep1ex
+
+ \item \texttt{ode\_mid} -- midpoint discretization
+
+ \item \texttt{ode\_end} -- endpoint discretization (port-Hamiltonian)
+
+\end{itemize}
+
+\begin{center}
+
+ \texttt{discrete = model(network,config);}
+
+\end{center}
+
+\normalsize
+
+\texttt{discrete} \textbf{Structure:}
+\vskip-1.2em
+\begin{columns}
+
+\begin{column}[t]{.45\textwidth}
+
+\begin{itemize}\itemsep1ex
+
+ \item \texttt{.E} -- Mass matrix function
+
+ \item \texttt{.A} -- System matrix
+
+ \item \texttt{.B} -- Input matrix
+
+ \item \texttt{.C} -- Output matrix
+
+ \item \texttt{.f} -- Nonlinear vector field
+
+\end{itemize}
+
+\end{column}
+
+\begin{column}[t]{.55\textwidth}
+
+\begin{itemize}\itemsep1ex
+
+ \item \texttt{.J} -- Vector field Jacobian
+
+ \item \texttt{.x0} -- Initial state
+
+ \item \texttt{.nP} -- Number of pressure states
+
+ \item \texttt{.nQ} -- Number of mass-flux states
+
+ \item \texttt{.nPorts} -- Number of ports
+
+\end{itemize}
+
+\end{column}
+
+\end{columns}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}\frametitle{Solvers}
+
+\vskip1ex
+
+\textbf{Implemented:}
+\begin{itemize}\itemsep.5ex\small
+
+ \item \texttt{imex1} -- 1st Order Implicit-Explicit (Euler-Euler)
+
+ \item \texttt{imex2} -- 2nd Order Implicit-Explicit (Runge-Kutta)
+
+ \item \texttt{cnab2} -- 2nd Order Crank-Nicolson/Adams-Bashforth
+
+ \item \texttt{generic} -- 2nd Order Adaptive Rosenbrock (\texttt{ode23s})
+
+ \item \texttt{rk4} -- ``Classic'' 4th Order Explicit Runge-Kutta
+
+ \item \texttt{rk2hyp} -- 2nd Order Explicit Runge-Kutta with increased stability
+
+ \item \texttt{rk4hyp} -- 4th Order Explicit Runge-Kutta with increased stability
+
+\end{itemize}
+
+\begin{center}
+
+ \texttt{solution = solver(discrete,scenario,config);}
+
+\end{center}
+
+\normalsize
+
+\texttt{solution} \textbf{Structure:}
+\vskip-1.2em
+\begin{columns}
+
+\begin{column}[t]{.43\textwidth}
+\begin{itemize}\itemsep1ex\small
+
+ \item \texttt{.t} -- Time instances
+
+ \item \texttt{.u} -- Input time series
+
+ \item \texttt{.y} -- Output time series
+
+ \item \texttt{.runtime} -- Solver runtime
+
+\end{itemize}
+\end{column}
+
+\begin{column}[t]{.58\textwidth}
+\begin{itemize}\itemsep1ex\small
+
+ \item \texttt{steady\_z0} -- Mean compressibility
+
+ \item \texttt{steady\_error} -- Steady-state error
+
+ \item \texttt{steady\_iter1} -- Algebraic Iterations
+
+ \item \texttt{steady\_iter2} -- Differential Iterations 
+
+\end{itemize}
+\end{column}
+
+\end{columns}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}\frametitle{Reductors}
+
+\vskip1ex
+
+\large
+
+\textbf{Implemented:}
+\begin{itemize}\itemsep1ex\small
+
+ \item \texttt{pod\_r} -- Structured Proper Orthogonal Decomposition (POD)
+
+ \item {\footnotesize $\begin{smallmatrix} \text{\texttt{eds\_ro}}, & \text{\texttt{eds\_wx}}, & \text{\texttt{eds\_wz}}, \\
+                                           \text{\texttt{eds\_ro\_l}}, & \text{\texttt{eds\_wx\_l}}, & \text{\texttt{eds\_wz\_l}} \end{smallmatrix}$} -- Structured Dominant Subspaces
+
+ \item {\footnotesize $\begin{smallmatrix} \text{\texttt{mpod\_ro}}, & \text{\texttt{mpod\_wx}}, & \text{\texttt{mpod\_wz}}, \\
+                                           \text{\texttt{mpod\_ro\_l}}, & \text{\texttt{mpod\_wx\_l}}, & \text{\texttt{mpod\_wz\_l}} \end{smallmatrix}$} -- Structured Modified POD
+
+ \item {\footnotesize $\begin{smallmatrix} \text{\texttt{bpod\_ro}}, \\ \text{\texttt{bpod\_ro\_l}} \end{smallmatrix}$}  -- Structured Balanced POD
+
+ \item {\footnotesize $\begin{smallmatrix} \text{\texttt{ebt\_ro}}, & \text{\texttt{ebt\_wx}}, & \text{\texttt{ebt\_wz}}, \\ 
+                                           \text{\texttt{ebt\_ro\_l}}, & \text{\texttt{ebt\_wx\_l}}, & \text{\texttt{ebt\_wz\_l}} \end{smallmatrix}$} -- Structured Balanced Truncation
+
+ \item \texttt{gopod\_r} -- Structured Goal-Oriented POD
+
+ \item {\footnotesize $\begin{smallmatrix} \text{\texttt{ebg\_ro}}, & \text{\texttt{ebg\_wx}}, & \text{\texttt{ebg\_wz}}, \\
+                                           \text{\texttt{ebg\_ro\_l}}, & \text{\texttt{ebg\_wx\_l}}, & \text{\texttt{ebg\_wz\_l}} \end{smallmatrix}$} -- Structured Balanced Gains
+
+ \item \texttt{dmd\_r} -- Structured Dynamic Mode Decomposition Galerkin
+
+\end{itemize}
+
+\begin{center}
+
+ \scalebox{.95}{\texttt{[proj,name] = reductor(solver,discrete,scenario,config);}}
+
+\end{center}
+
+\begin{itemize}\itemsep.3ex
+
+ \item \texttt{proj} -- Cell array of projectors
+
+ \item \texttt{name} -- Full name of reductor
+
+\end{itemize}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}\frametitle{Networks \& Tests}
+
+\textbf{Network and scenario data:}
+\begin{itemize}
+
+ \item Network data stored as decorated edge list in CSV format (\texttt{.net}). 
+
+ \item Scenario data stored as key-vale pairs in INI format (\texttt{.ini}).
+
+ \item Network base name determines associated scenario folder name.
+
+ \item Each network has minimally a \texttt{training.ini} scenario.
+
+\end{itemize}
+
+~\\
+
+\textbf{Types of tests:}
+\begin{itemize}
+
+ \item Prefix \texttt{sim\_} -- Simulate scenario by a model-solver combination.
+
+ \item Prefix \texttt{mor\_} -- Reduce and test model-solver-reductor combination.
+
+\end{itemize}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}\frametitle{Tools}
+
+\large
+
+\textbf{Available:}
+\begin{itemize}
+
+ \item \texttt{xml2net} -- Convert \emph{GasLib} \texttt{.xml} to \texttt{morgen} \texttt{.net}
+
+ \item \texttt{json2net} -- Convert \emph{MathEnergy} \texttt{.json} to \texttt{morgen} \texttt{.net}
+
+ \item \texttt{csv2net} -- Convert \emph{SciGRID\_gas} \texttt{.csv} to \texttt{morgen} \texttt{.net}
+
+ \item \texttt{vf2kgs} -- Convert volume flow to mass flow in kg/s
+
+ \item \texttt{psi2bar} -- Convert pressure from psi to bar
+
+ \item \texttt{cmp\_friction} -- Compare friction factors
+
+ \item \texttt{cmp\_compressibility} -- Compare compressibility factors
+
+ \item \texttt{randscen} -- Generate random scenario from training scenario
+
+\end{itemize}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}\frametitle{Configuration}
+
+\large
+
+\textbf{Available:}
+\begin{itemize}
+
+ \item optional arguments (\texttt{varargin})
+
+ \item configuration file (\texttt{morgen.ini})
+
+ \item fallback via hard-coded default values
+
+\end{itemize}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}\frametitle{Use \texttt{morgen}}
+
+\begin{center}
+ \scalebox{0.81}{\texttt{R = morgen(network\_id,scenario\_id,model\_id,solver\_id,reductor\_ids,varargin);}}
+\end{center}
+
+\setlength{\leftmargini}{5em}
+\begin{itemize}
+
+ \item[\{string\}] \texttt{network\_id} -- Network file (\texttt{.net}) base name
+
+ \item[\{string\}] \texttt{scenario\_id} -- Scenario file (\texttt{.ini}) base name
+
+ \item[\{string\}] \texttt{model\_id} -- Model function name
+
+ \item[\{string\}] \texttt{solver\_id} -- Solver function name
+
+ \item[\{cell\}] \texttt{reductor\_ids} -- Array of reductor names
+
+ \item[\{string\}] \texttt{varargin} -- Adhoc configuration arguments (\texttt{`key=val`})
+
+\end{itemize}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}\frametitle{Notes}
+
+\large
+
+~\\
+
+\begin{itemize}
+
+ \item \texttt{morgen} is open source {\normalsize (under BSD-2-Clause license)},
+
+ \item and compatible with MATLAB and Octave.
+
+ \item A template model, solver and reductor are available.
+
+ \item Currently, all reductors use \texttt{emgr}: \alert{\url{https://gramian.de}}.
+
+ \item See \alert{\href{https://github.com/mpimd-csc/morgen/blob/main/README.md}{\texttt{README.md}}} for more info.
+
+ \item This is research software!
+
+\end{itemize}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}\frametitle{Summary}
+
+\large
+
+\begin{center}\large
+\texttt{morgen} -- \textbf{M}odel \textbf{O}rder \textbf{R}eduction for \textbf{G}as and \textbf{E}nergy \textbf{N}etworks \\
+\vskip11ex\LARGE
+ $\rightarrow$~~\alert{\url{https://git.io/morgen}}~~$\leftarrow$
+\end{center}
+
+~\\~\\~\\~\\
+
+C.~Himpe, S.~Grundel, P.~Benner: \\
+\textbf{Model Order Reduction for Gas and Energy Networks}. \\
+Journal of Mathematics in Industry 11: 13, 2021. \\
+\alert{\url{https://doi.org/10.1186/s13362-021-00109-4}}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}\frametitle{References}
+
+\scriptsize
+
+\begin{itemize}
+
+ \item C.~Himpe, S.~Grundel: \textbf{System Order Reduction for Gas and Energy Networks}; Proceedings in Applied Mathematics and Mechanics: ?--?, 2022. \href{https://doi.org/}{\texttt{doi:}}
+
+ \item C.~Himpe, S.~Grundel, P.~Benner: \textbf{Next-Gen Gas Network Simulation}; Progress in Industrial Mathematics at ECMI 2021: ?--?, 2022. \href{https://doi.org/}{\texttt{doi:}}
+
+ \item C.~Himpe, S.~Grundel, P.~Benner: \textbf{Efficient Gas Network Simulations}; in: German Success Stories in Industrial Mathematics: 17--22, 2022. \href{https://doi.org/10.1007/978-3-030-81455-7\_4}{\texttt{doi:10.1007/978-3-030-81455-7\_4}}
+
+ \item C.~Himpe, S.~Grundel, P.~Benner: \textbf{Model Order Reduction for Gas and Energy Networks}; Journal of Mathematics in Industry 11: 13, 2021. \href{https://doi.org/10.1186/s13362-021-00109-4}{\texttt{doi:10.1186/s13362-021-00109-4}}
+
+ \item T.~Clees, A.~Baldin, P.~Benner, S.~Grundel, C.~Himpe, B.~Klaassen, F.~Küsters, N.~Marheineke, L.~Nikitina, I.~Nikitin, J.~Pade, N.~Stahl, C.~Strohm, C.~Tischendorf, A.~Wirsen: \textbf{MathEnergy – Mathematical Key Technologies for Evolving Energy Grids}; in: Mathematical Modeling, Simulation and Optimization for Power Engineering and Management: 233--262, 2021. \href{https://doi.org/10.1007/978-3-030-62732-4\_11}{\texttt{doi:10.1007/978-3-030-62732-4\_11}} 
+
+ \item P.~Benner, S.~Grundel, C.~Himpe, C.~Huck, T.~Streubel, C.~Tischendorf: \textbf{Gas Network Benchmark Models}; in: Applications of Differential-Algebraic Equations: Examples and Benchmarks: 171--197, 2019. \href{https://doi.org/10.1007/11221\_2018\_5}{\texttt{doi:10.1007/11221\_2018\_5}}
+
+ \item P.~Benner, S.~Grundel, C.~Himpe: \textbf{Parametric Model Order Reduction for Gas Flow Models}; ScienceOpen Posters MoRePas 4, 2018. \href{https://doi.org/10.14293/P2199-8442.1.SOP-MATH.EJOCET.v1}{\texttt{doi:10.14293/P2199-8442.1.SOP-MATH.EJOCET.v1}}
+
+\end{itemize}
+
+\end{frame}
+
+\end{document}
+

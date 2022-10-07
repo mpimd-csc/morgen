@@ -1,6 +1,6 @@
 function solution = imex2(discrete,scenario,config)
 %%% project: morgen - Model Order Reduction for Gas and Energy Networks
-%%% version: 1.1 (2021-08-08)
+%%% version: 1.2 (2022-10-07)
 %%% authors: C. Himpe (0000-0003-2194-6754), S. Grundel (0000-0002-0209-6566)
 %%% license: BSD-2-Clause (opensource.org/licenses/BSD-2-clause)
 %%% summary: 2nd order IMEX-RK solver.
@@ -44,7 +44,7 @@ function solution = imex2(discrete,scenario,config)
     tID = tic;
 
     Fcp = discrete.F * scenario.cp;
-    fp = @(x,u) Fcp + discrete.B * u + discrete.f(config.steady.as,config.steady.xs,x,scenario.us,u,rtz);
+    fp = @(x,u) Fcp + discrete.B * u + discrete.f(config.steady.xs,x,scenario.us,u,rtz);
 
     t = 0:config.dt:scenario.tH;
     K = numel(t);
@@ -57,21 +57,19 @@ function solution = imex2(discrete,scenario,config)
     % Time stepper
     for k = 2:K
 
-        uk = scenario.ut(t(k));
-
-        u(:,k) = u(:,k) + uk;
+        u(:,k) = u(:,k) + scenario.ut(t(k));
 
         zk = discrete.E(rtz) * xk;
         z1 = AU \ (AL \ zk(AP));
 
-        f1 = config.dt * fp(xk,uk);
+        f1 = config.dt * fp(xk,u(:,k));
         if config.relax < 1.0, f1 = f1 + (1.0 - config.relax) * (discrete.A * xk); end%if
         a1 = (config.dt * config.relax) * discrete.A * z1;
 
         z2 = zk + f1 + (1.0 - 2.0 * LAMBDA) * a1;
         z2 = AU \ (AL \ z2(AP));
 
-        f2 = config.dt * (fp(z1,uk) + (1.0 - config.relax) * z1);
+        f2 = config.dt * (fp(z1,u(:,k)) + (1.0 - config.relax) * z1);
         if config.relax < 1.0, f2 = f2 + (1.0 - config.relax) * (discrete.A * z1); end%if
         a2 = (config.dt * config.relax) * discrete.A * z2;
 

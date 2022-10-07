@@ -1,6 +1,6 @@
 function plot_error(plot_path,name,id,orders,data,labels,scores,compact,yscale)
 %%% project: morgen - Model Order Reduction for Gas and Energy Networks
-%%% version: 1.1 (2021-08-08)
+%%% version: 1.2 (2022-10-07)
 %%% authors: C. Himpe (0000-0003-2194-6754), S. Grundel (0000-0002-0209-6566)
 %%% license: BSD-2-Clause (opensource.org/licenses/BSD-2-clause)
 %%% summary: plot comparable data as lines.
@@ -27,12 +27,20 @@ function plot_error(plot_path,name,id,orders,data,labels,scores,compact,yscale)
 
     hold off;
     xlim([min(orders),max(orders)]);
-    ylim([10^yscale,1]);
+    ylim(real([10^yscale,1]));
+
+    xlabel('Reduced Dimension');
+    ylabel(['Relative ',id,'-Error']);
+
+    slabels = {};
+    for k=1:numel(labels)
+
+       slabels{k} = [labels{k},' (μ=',sprintf('%1.2f',scores{k}),')'];
+    end%for
 
     if compact
 
-        scorelabels = cellfun(@(l,s) [l,' \mu=',sprintf('%.2f',s)],labels,scores,'UniformOutput',false);
-        legend(scorelabels,'location','SouthOutside');
+        legend(slabels,'location','SouthOutside');
     else
 
         set([gca; findall(gca,'Type','text')],'FontSize',16);
@@ -41,11 +49,8 @@ function plot_error(plot_path,name,id,orders,data,labels,scores,compact,yscale)
 
         if not(exist('OCTAVE_VERSION','builtin'))
 
-            legend_print(gca,labels,[plot_path,filesep,name]);
+            legend_print(gca,slabels,[plot_path,filesep,name]);
         end%if
     end%if
-
-    xlabel('Reduced Dimension');
-    ylabel(['Relative ',id,'-Error']);
 end
 

@@ -1,6 +1,6 @@
 function plot_output(plot_path,name,solution,network,compact)
 %%% project: morgen - Model Order Reduction for Gas and Energy Networks
-%%% version: 1.1 (2021-08-08)
+%%% version: 1.2 (2022-10-07)
 %%% authors: C. Himpe (0000-0003-2194-6754), S. Grundel (0000-0002-0209-6566)
 %%% license: BSD-2-Clause License (opensource.org/licenses/BSD-2-clause)
 %%% summary: Plot mass flow at supply nodes and pressure at demand nodes.
@@ -37,7 +37,7 @@ function plot_output(plot_path,name,solution,network,compact)
     set(0,'DefaultAxesColorOrder',monomapper(1,network.nSupply));
     plot(solution.t,solution.u(1:network.nSupply,:),'linewidth',3);
     xlim([0,solution.t(end)]);
-    ylim([pr1 - prd,pr2 + prd]);
+    ylim(real([pr1 - prd,pr2 + prd]));
     xlabel('Supply');    
     ylabel('Pressure [bar]');
     set(gca,'XAxisLocation','top','xticklabel',[]);
@@ -46,7 +46,7 @@ function plot_output(plot_path,name,solution,network,compact)
     set(0,'DefaultAxesColorOrder',monomapper(2/3,network.nDemand));
     plot(solution.t,solution.u(network.nSupply+1:end,:),'linewidth',3);
     xlim([0,solution.t(end)]);
-    ylim([mf1 - mfd,mf2 + mfd]);
+    ylim(real([mf1 - mfd,mf2 + mfd]));
     xlabel('Demand');  
     ylabel('Mass Flow [kg/s]');
     set(gca,'YAxisLocation','right','XAxisLocation','top','xticklabel',[]);
@@ -55,7 +55,7 @@ function plot_output(plot_path,name,solution,network,compact)
     set(0,'DefaultAxesColorOrder',monomapper(2/3,network.nSupply));
     plot(solution.t,solution.y(1:network.nSupply,:),'linewidth',3);
     xlim([0,solution.t(end)]); 
-    ylim([mf1 - mfd,mf2 + mfd]);
+    ylim(real([mf1 - mfd,mf2 + mfd]));
     xlabel('Time [s]')
     ylabel('Mass Flow [kg/s]');
 
@@ -63,7 +63,7 @@ function plot_output(plot_path,name,solution,network,compact)
     set(0,'DefaultAxesColorOrder',monomapper(1,network.nDemand));
     plot(solution.t,solution.y(network.nSupply+1:end,:),'linewidth',3);
     xlim([0,solution.t(end)]);
-    ylim([pr1 - prd,pr2 + prd]);
+    ylim(real([pr1 - prd,pr2 + prd]));
     xlabel('Time [s]')
     ylabel('Pressure [bar]');
     set(gca,'YAxisLocation','right');

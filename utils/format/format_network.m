@@ -1,6 +1,6 @@
 function refined_network = format_network(network_path,config)
 %%% project: morgen - Model Order Reduction for Gas and Energy Networks
-%%% version: 1.1 (2021-08-08)
+%%% version: 1.2 (2022-10-07)
 %%% authors: C. Himpe (0000-0003-2194-6754), S. Grundel (0000-0002-0209-6566)
 %%% license: BSD-2-Clause (opensource.org/licenses/BSD-2-clause)
 %%% summary: Read net file and return a network structure.
@@ -11,7 +11,7 @@ function refined_network = format_network(network_path,config)
     % Load CSV file into cell array of columns
     if isfile(network_path)
 
-        col = textscan(fileread(network_path),'%c %f %f %f %f %f %f','HeaderLines',1,'Delimiter',',','EndOfLine','\n');
+        col = textscan(fileread(network_path),'%c %f %f %f %f %f %f','HeaderLines',1,'Delimiter',',','EndOfLine','\n','CommentStyle','#');
 
         % If Octave returns a cell convert to array
         if iscell(col{1})

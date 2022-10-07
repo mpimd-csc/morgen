@@ -1,6 +1,6 @@
 function R = morgen(network_id,scenario_id,model_id,solver_id,reductor_ids,varargin)
 %%% project: morgen - Model Order Reduction for Gas and Energy Networks
-%%% version: 1.1 (2021-08-08)
+%%% version: 1.2 (2022-10-07)
 %%% authors: C. Himpe (0000-0003-2194-6754), S. Grundel (0000-0002-0209-6566)
 %%% license: BSD-2-Clause (opensource.org/licenses/BSD-2-clause)
 %%% summary: Model reduction test platform and task master.
@@ -11,8 +11,11 @@ function R = morgen(network_id,scenario_id,model_id,solver_id,reductor_ids,varar
 %% INIT MORGEN
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+    % Start timer
+    total = tic;
+
     % Version constant
-    MORGEN_VERSION = 1.1;
+    MORGEN_VERSION = 1.2;
 
     % Random number seeding
     SEED = 1009;
@@ -155,7 +158,7 @@ function R = morgen(network_id,scenario_id,model_id,solver_id,reductor_ids,varar
 
     config.network.dt = varfield(varargin,'dt',inifield(ini,'network_dt',180));
     config.network.vmax = inifield(ini,'network_vmax',20);
-    config.network.cfl = inifield(ini,'network_cfl',0.5);
+    config.network.cfl = varfield(varargin,'cfl',inifield(ini,'network_cfl',0.5));
 
     network = format_network(network_path,config.network);
 
@@ -219,7 +222,6 @@ function R = morgen(network_id,scenario_id,model_id,solver_id,reductor_ids,varar
     config.steady.Tc = celsius2kelvin(inifield(ini,'steady_Tc',-82.595));
     config.steady.pc = inifield(ini,'steady_pc',45.988);
     config.steady.pn = inifield(ini,'steady_pn',101.325);
-    config.steady.gravity = config.model.gravity;
 
     compressibility_name = inifield(ini,'model_compressibility','ideal',{'ideal','dvgw','aga88','papay'});
     compressibility_ref = inifield(ini,'model_compref','steady',{'steady','normal'});
@@ -253,13 +255,20 @@ function R = morgen(network_id,scenario_id,model_id,solver_id,reductor_ids,varar
 
     config.solver.dt = config.network.dt;
     config.solver.relax = min(1.0,max(0,inifield(ini,'solver_relax',1)));
+    config.solver.rk2type = inifield(ini,'solver_rk2type',11,{5,6,7,8,9,10,11,12});
+    config.solver.rk4type = inifield(ini,'solver_rk4type','MeaR99a',{'MeaR99a','MeaR99b','TseS05','App14'});
     config.solver.id = [network_id,'--',scenario_id];
 
     solver = @(d,s,c) solver_fun(d,s,setfield(c,'steady',steadystate(discrete,s,config.steady)));
 
     logger('done');
 
-    logger('input','Solver relaxation',config.solver.relax,'%.2f');
+    switch solver_id
+
+        case {'imex1','imex2'}, logger('input','Solver relaxation',config.solver.relax,'%.2f');
+        case 'rk2hyp',          logger('input','Number of stages',config.solver.rk2type,'%u');
+        case 'rk4hyp',          logger('input','Type',config.solver.rk4type,'%s');
+    end%switch
 
     logger('next');
 
@@ -399,7 +408,7 @@ function R = morgen(network_id,scenario_id,model_id,solver_id,reductor_ids,varar
             R = struct('reductors',labels, ...
                        'offline',offline);
 
-            logger('exit');
+            logger('exit',total);
 
             return;
         end%if
@@ -555,7 +564,7 @@ function R = morgen(network_id,scenario_id,model_id,solver_id,reductor_ids,varar
                 tmp_l8 = NaN(1,redOrders);
                 tmp_l0 = NaN(1,redOrders);
 
-                for l = 1:redOrders % For each reduced order ... % parfor
+                for l = 1:redOrders % For each reduced order ... 
 
                     rdiscrete = ROM{k}(redOrder(l));
 
@@ -656,6 +665,7 @@ function R = morgen(network_id,scenario_id,model_id,solver_id,reductor_ids,varar
         plot_error(plot_path,base_name,'L2',2 * redOrder,l2,labels,s2,compact,yscale);
 
         plot_offline(plot_path,[network_id,'--',model_id,'--',solver_id],offline,labels,compact);
+        plot_morscore(plot_path,[network_id,'--',model_id,'--',solver_id],s2,labels,compact);
         plot_online(plot_path,base_name,2 * redOrder,online,labels,compact);
         plot_breven(plot_path,base_name,2 * redOrder,breven,labels,compact);
 
@@ -669,11 +679,11 @@ function R = morgen(network_id,scenario_id,model_id,solver_id,reductor_ids,varar
 %% PRINT AND SAVE RESULTS
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-        logger('head',['L2 MORscores (',base_name,')']);
+        logger('head',['MORscore Summary (',base_name,')']);
 
         logger('input','State norm',2,'L%u');
         logger('input','Parameter norm',config.eval.pnorm,'L%u');
-        logger('input','Numerical precision',10.0^floor(log10(eps)),'%e');
+        logger('input','Numerical precision |log10|',abs(floor(log10(eps))),'%u');
         logger('input','Maximum reduced order',2 * config.eval.max,'%u');
 
         logger('line');
@@ -701,6 +711,6 @@ function R = morgen(network_id,scenario_id,model_id,solver_id,reductor_ids,varar
         R = ref_output{1}.y;
     end%if
 
-    logger('exit');
+    logger('exit',total);
 end
 

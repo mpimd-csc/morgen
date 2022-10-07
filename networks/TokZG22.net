@@ -1,0 +1,10 @@
+# type, identifier-in, identifier-out, pipe-length [m], pipe diameter [m], height difference [m], pipe roughness [m]		
+P,7,2,20000.0,0.91,0.0,0.0001
+P,8,3,70000.0,0.91,0.0,0.0001
+P,2,4,60000.0,0.63,0.0,0.0001
+P,3,4,10000.0,0.91,0.0,0.0001
+P,9,5,80000.0,0.91,0.0,0.0001
+S,3,6
+C,1,7
+C,2,8
+C,4,9
