@@ -735,7 +735,8 @@ model-solver-reductor ensemble(s):
   * See also the references listed herein.
 
 * C. Himpe, S. Grundel, P. Benner: **Next-Gen Gas Network Simulation**;
-  in: Progress in Industrial Mathematics at ECMI 2021: Accepted, 2022.
+  in: Progress in Industrial Mathematics at ECMI 2021: 107--113, 2022.
+  [doi:10.1007/978-3-031-11818-0_15](https://doi.org/10.1007/978-3-031-11818-0_15)
   * See also the references listed herein.
 
 * C. Himpe, S. Grundel, P. Benner: **Model Order Reduction for Gas and Energy Networks**;
