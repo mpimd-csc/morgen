@@ -731,7 +731,8 @@ model-solver-reductor ensemble(s):
 ## References
 
 * C. Himpe, S. Grundel: **System Order Reduction for Gas and Energy Networks**;
-  in: Proceedings in Applied Mathematics and Mechanics: Submitted, 2022.
+  in: Proceedings in Applied Mathematics and Mechanics, 22: e202200201, 2023.
+  [doi:10.1002/pamm.202200201](https://doi.org/10.1002/pamm.202200201)
   * See also the references listed herein.
 
 * C. Himpe, S. Grundel, P. Benner: **Next-Gen Gas Network Simulation**;
